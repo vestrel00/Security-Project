@@ -1,0 +1,31 @@
+package com.vestrel00.ssc.server;
+
+import java.io.IOException;
+
+/**
+ * The server's response to a client request is this service.
+ * @author Estrellado, Vandolf
+ *
+ */
+public interface SSCServerService extends Runnable {
+
+	/**
+	 * Initialize the BufferedReader and PrintWriters that will be used for
+	 * communicating with the client. Closes the in and out streams and creates
+	 * new ones if streams already exist.
+	 * 
+	 * @throws IOException
+	 */
+	public void initIOTools() throws IOException;
+
+	/**
+	 * Close all the streaming connections including the client socket.
+	 * 
+	 * @throws IOException
+	 */
+	public void stopService() throws IOException;
+
+	@Override
+	public void run();
+
+}

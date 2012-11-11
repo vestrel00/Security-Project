@@ -1,0 +1,9 @@
+package com.vestrel00.ssc.client;
+
+import java.net.Socket;
+
+public class SSCClient {
+
+	private Socket socket;
+
+}

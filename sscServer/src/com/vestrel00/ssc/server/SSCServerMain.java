@@ -2,6 +2,8 @@ package com.vestrel00.ssc.server;
 
 import java.io.IOException;
 
+import com.vestrel00.ssc.server.interf.SSCServer;
+
 /**
  * Starts the server program of SSC.
  * @author Estrellado, Vandolf
@@ -9,13 +11,11 @@ import java.io.IOException;
  */
 public class SSCServerMain {
 	
-	public static Thread thread;
 	public static SSCServer server;
 
 	public static void main(String args[]) throws IOException{
-		server = new SSCServer(8080);
-		thread = new Thread(server);
-		thread.start();
+		server = new SSCServerStandard(8080);
+		server.start();
 	}
 	
 }

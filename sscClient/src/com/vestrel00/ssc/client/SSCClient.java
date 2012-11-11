@@ -10,11 +10,11 @@ import java.net.UnknownHostException;
  *
  */
 public class SSCClient {
+
+	private Socket socket;
 	
-	public static Socket socket;
-	
-	public static void main(String args[]) throws UnknownHostException, IOException{
-		socket = new Socket("127.0.0.1", 8080);
+	public SSCClient(String host, int port) throws UnknownHostException, IOException{
+		socket = new Socket(host, port);
 	}
-	
+
 }
