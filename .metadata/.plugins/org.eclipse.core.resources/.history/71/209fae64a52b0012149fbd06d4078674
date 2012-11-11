@@ -1,0 +1,57 @@
+package com.vestrel00.ssc;
+
+import com.badlogic.gdx.ApplicationListener;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.GL10;
+import com.badlogic.gdx.utils.TimeUtils;
+
+/**
+ * Main class for Simple Secure Chat.
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public class SSC implements ApplicationListener {
+
+	// Control Frames per sec (FPS)
+	public static final long FPS = 40L;
+	public static final long FRAME_INTERVAL = 1000000000L / FPS;
+	public static long lastFrame = 0L;
+	
+	// Server
+	public static SSCServer server;
+
+	@Override
+	public void create() {
+		server = new SSCServer("127.0.0.1", 8080);
+	}
+
+	@Override
+	public void dispose() {
+
+	}
+
+	@Override
+	public void render() {
+		if (TimeUtils.nanoTime() - lastFrame > FRAME_INTERVAL) {
+			lastFrame = TimeUtils.nanoTime();
+			Gdx.gl.glClearColor(1, 1, 1, 1);
+			Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+			
+			
+
+		}
+	}
+
+	@Override
+	public void resize(int width, int height) {
+	}
+
+	@Override
+	public void pause() {
+	}
+
+	@Override
+	public void resume() {
+	}
+}

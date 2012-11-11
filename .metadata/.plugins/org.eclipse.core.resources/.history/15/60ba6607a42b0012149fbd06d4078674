@@ -1,0 +1,14 @@
+package com.vestrel00.ssc;
+
+/**
+ * This is the protocol that the application runs for each client.
+ * @author Estrellado, Vandolf
+ *
+ */
+public class SSCProtocol {
+
+	public SSCProtocol(){
+		
+	}
+	
+}

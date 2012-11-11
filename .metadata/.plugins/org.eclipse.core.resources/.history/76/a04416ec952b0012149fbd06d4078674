@@ -1,0 +1,4 @@
+package com.vestrel00.ssc;
+
+public class SSCServerAddress extends SocketAddress{
+}

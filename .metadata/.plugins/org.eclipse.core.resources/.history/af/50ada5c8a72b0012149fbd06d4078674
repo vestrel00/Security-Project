@@ -1,0 +1,16 @@
+package com.vestrel00.ssc;
+
+/**
+ * The client that interacts with the server.
+ * @author Estrellado, Vandolf
+ *
+ */
+public class SSCClient {
+	
+	private Socket server;
+	
+	public SSCClient(int port){
+		
+	}
+	
+}

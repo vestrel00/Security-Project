@@ -1,0 +1,12 @@
+package com.vestrel00.ssc.inter;
+
+/**
+ * Application is divided into layers. Each layer draws its components on the
+ * screen.
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public interface Layer {
+	public void draw(SpriteBatch batch);
+}

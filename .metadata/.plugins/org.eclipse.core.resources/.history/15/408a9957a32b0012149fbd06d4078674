@@ -1,0 +1,14 @@
+package com.vestrel00.ssc;
+
+/**
+ * 
+ * @author vestrel00
+ *
+ */
+public class SSCProtocol {
+
+	public SSCProtocol(){
+		
+	}
+	
+}

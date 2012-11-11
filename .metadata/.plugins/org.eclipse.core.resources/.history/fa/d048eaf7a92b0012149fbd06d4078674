@@ -1,0 +1,9 @@
+package com.vestrel00.ssc.server;
+
+public class SSCServerMain {
+
+	public static void main(String args[]){
+		
+	}
+	
+}

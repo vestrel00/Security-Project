@@ -1,0 +1,18 @@
+package com.vestrel00.ssc;
+
+import java.net.Socket;
+
+/**
+ * The client that interacts with the server.
+ * @author Estrellado, Vandolf
+ *
+ */
+public class SSCClient {
+	
+	private Socket socket;
+	
+	public SSCClient(String host, int port){
+		socket = new Socket(host, port);
+	}
+	
+}

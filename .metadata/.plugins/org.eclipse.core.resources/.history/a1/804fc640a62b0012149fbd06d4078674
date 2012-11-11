@@ -1,0 +1,56 @@
+package com.vestrel00.ssc;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+/**
+ * <p>
+ * The main server. This runnable forever listens for client socket connection
+ * requests on the ServerSocket.
+ * </p>
+ * <p>
+ * When a request comes in, this accepts the connection, creates a new
+ * SSCServerService object to process it, hands it the socket returned from
+ * accept, and starts the SSCServerService thread. Then the server goes back to
+ * listening for connection requests
+ * </p>
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public class SSCServer implements Runnable {
+
+	private ServerSocket server;
+	private Socket serverSocket;
+	private boolean isListening;
+
+	/**
+	 * Create the server with the given port number.
+	 * 
+	 * @throws IOException
+	 */
+	public SSCServer(int port) throws IOException {
+		server = new ServerSocket(port);
+		isListening = true;
+	}
+
+	/**
+	 * Update the server and all its components. <b>This must be called
+	 * repeatedly in order to accept more client connection requests!</b>
+	 * 
+	 * @throws IOException
+	 */
+	public void run(){
+		while (server != null && isListening) {
+			try {
+				Socket newClient = server.accept();
+				new Thread(new SSCServerService(newClient)).start();
+				stopListening();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+}
