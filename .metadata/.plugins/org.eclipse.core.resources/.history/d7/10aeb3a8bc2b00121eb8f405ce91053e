@@ -45,7 +45,7 @@ public class SSCServer implements Runnable {
 	 * @throws IOException
 	 */
 	public void run() {
-		while (isListening) {
+		while (server != null && isListening) {
 			try {
 				Socket newClient = server.accept();
 				clientServices.add(new SSCServerService(newClient));

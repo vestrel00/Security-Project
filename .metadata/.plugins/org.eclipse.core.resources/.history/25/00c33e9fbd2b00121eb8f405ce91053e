@@ -58,7 +58,7 @@ public class SSCServerService implements Runnable {
 
 	@Override
 	public void run() {
-		while (inService) {
+		while inService) {
 			protocol.work();
 		}
 		try {

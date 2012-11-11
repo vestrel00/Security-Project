@@ -62,7 +62,7 @@ public class SSCServerService implements Runnable {
 			protocol.work();
 		}
 		try {
-			stopService();
+			stopService();Thread t = null; t.run();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
