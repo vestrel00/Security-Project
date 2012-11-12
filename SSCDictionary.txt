@@ -4,3 +4,4 @@ vandolf
 decrypt
 decrypted
 crypto
+len

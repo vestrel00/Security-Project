@@ -9,6 +9,8 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 import com.vestrel00.ssc.client.interf.SSCCrypto;
+import com.vestrel00.ssc.client.shared.SSCCryptoAES;
+import com.vestrel00.ssc.client.shared.SSCStreamManager;
 
 /**
  * The client that interacts with the server.
@@ -30,7 +32,8 @@ public class SSCClient {
 		socket = new Socket(host, port);
 		initIOTools();
 		try {
-			crypt = new SSCCryptoAES("0123456789abcdef".getBytes());
+			// TODO parameterize
+			crypt = new SSCCryptoAES("0123456789abcdef".getBytes(), "kkjf9934ihssj");
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		}
@@ -76,14 +79,35 @@ public class SSCClient {
 
 	/**
 	 * Starts listening for user input. User input is streamed out to the server
-	 * service.
+	 * service. <br>
+	 * <b>Procedure: </b>
+	 * <ol>
+	 * <li>E(m) is sent to server</li>
+	 * <li>Client waits for server OK</li>
+	 * <li>Client sends H(m)</li>
+	 * </ol>
 	 * 
 	 * @throws IOException
 	 */
 	public void start() throws IOException {
 		// TODO
 		while ((userStr = userIn.readLine()) != null) {
+			// TODO store in the Client buffer
+			// send E(m)
 			SSCStreamManager.sendBytes(out, crypt.encrypt(userStr.getBytes()));
+			/*
+			// wait for server OK
+			String resultCode = new String(crypt.decrypt(SSCStreamManager
+					.readBytes(in)));
+
+			if (resultCode.contentEquals(SSCCryptoAES.OK))
+				// TODO USE BASE64
+				SSCStreamManager.sendBytes(out,
+						crypt.encrypt(userStr.getBytes()));
+			else
+				// something went wrong - do nothing
+				continue;
+				*/
 		}
 		finish();
 	}

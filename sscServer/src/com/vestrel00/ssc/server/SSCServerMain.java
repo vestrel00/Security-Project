@@ -14,7 +14,7 @@ public class SSCServerMain {
 	public static SSCServer server;
 
 	public static void main(String args[]) throws IOException{
-		server = new SSCServerStandard(8080);
+		server = new SSCServerStandard(8080, 2, 10);
 		server.start();
 	}
 	

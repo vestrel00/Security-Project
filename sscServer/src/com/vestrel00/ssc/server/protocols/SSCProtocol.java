@@ -4,8 +4,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import com.vestrel00.ssc.server.SSCCryptoAES;
-import com.vestrel00.ssc.server.SSCStreamManager;
+import com.vestrel00.ssc.server.shared.SSCCryptoAES;
+import com.vestrel00.ssc.server.shared.SSCStreamManager;
 import com.vestrel00.ssc.server.interf.SSCCrypto;
 import com.vestrel00.ssc.server.interf.SSCServerService;
 
@@ -46,7 +46,8 @@ public class SSCProtocol {
 		this.out = out;
 		isWorking = true;
 		try {
-			crypt = new SSCCryptoAES("0123456789abcdef".getBytes());
+			// TODO parameterize
+			crypt = new SSCCryptoAES("0123456789abcdef".getBytes(), "kkjf9934ihssj");
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		}
@@ -66,10 +67,16 @@ public class SSCProtocol {
 
 	/**
 	 * This is where the magic of the protocol happens.<br>
-	 * Process the string received from the client.<br>
+	 * Process the message received from the client.<br>
 	 * The string may be a password, username, service request, or anything that
 	 * this protocol can offer. This may end the service/connection if the
-	 * client closes the program abruptly.
+	 * client closes the program abruptly.<br>
+	 * For this case, we receive E(m) and H(m).
+	 * <ol>
+	 * <li>decrypt E(m)</li>
+	 * <li>hash m and check if it equals the received H(m)</li>
+	 * <li>if it checks out, store the data in the buffer</li>
+	 * </ol>
 	 */
 	private void processData() {
 		try {

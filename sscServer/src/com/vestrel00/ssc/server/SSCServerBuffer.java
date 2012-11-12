@@ -7,9 +7,9 @@ import com.vestrel00.ssc.server.datatypes.SSCBufferClient;
 
 /**
  * This is used to hold all messages received from all clients. The buffer
- * should not be plain text (String). If adversary Malice where to get a hold of
- * the buffer, we don't want Malice to immediately see the contents without
- * doing any work.
+ * should not be plain text (String). If adversary Malice where to get access to
+ * the server's buffer, we don't want Malice to immediately see the contents
+ * without doing any work.
  * 
  * @author Estrellado, Vandolf
  * 
@@ -23,7 +23,7 @@ public class SSCServerBuffer {
 	 */
 	private List<ArrayList<byte[]>> buffers;
 	private List<SSCBufferClient> clients;
-	private int maxClientCount;
+	private final int maxClientCount, maxClientBufferSize;
 
 	private StringBuilder builder;
 
@@ -32,10 +32,11 @@ public class SSCServerBuffer {
 	 * 
 	 * @param bufferSize
 	 *            The amount of memory this buffer can hold. Used for keeping
-	 *            track of client and server history.
+	 *            track each message each client sends.
 	 */
-	public SSCServerBuffer(int maxClientCount) {
+	public SSCServerBuffer(int maxClientCount, int maxClientBufferSize) {
 		this.maxClientCount = maxClientCount;
+		this.maxClientBufferSize = maxClientBufferSize;
 		clients = new ArrayList<SSCBufferClient>();
 		buffers = new ArrayList<ArrayList<byte[]>>();
 		builder = new StringBuilder();
@@ -90,10 +91,16 @@ public class SSCServerBuffer {
 	}
 
 	/**
-	 * Sets the size of the buffer with the given id.
+	 * Sets the size of the buffer with the given id. The given size may not
+	 * exceed the maximum size set by the server. If it does, it will be set to
+	 * the maximum set by the server.
+	 * 
 	 */
 	public void setSize(int bufferSize, int bufferId) {
-		clients.get(bufferId).setBufferSize(bufferSize);
+		if (bufferSize < maxClientBufferSize)
+			clients.get(bufferId).setBufferSize(bufferSize);
+		else
+			clients.get(bufferId).setBufferSize(maxClientBufferSize);
 	}
 
 	/**

@@ -23,10 +23,11 @@ public class SSCServerStandard implements SSCServer {
 	private SSCServerBuffer buffer;
 	private boolean isListening;
 
-	public SSCServerStandard(int port) throws IOException {
+	public SSCServerStandard(int port, int maxClientCount,
+			int maxClientBufferSize) throws IOException {
 		server = new ServerSocket(port);
 		clientServices = new ArrayList<SSCServerService>();
-		buffer = new SSCServerBuffer(10);
+		buffer = new SSCServerBuffer(maxClientCount, maxClientBufferSize);
 		isListening = true;
 	}
 

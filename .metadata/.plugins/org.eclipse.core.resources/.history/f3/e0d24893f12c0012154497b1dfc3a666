@@ -1,0 +1,10 @@
+package com.vestrel00.ssc.client;
+
+/**
+ * Holds all incoming and outgoing messages as plain text.
+ * @author vestrel00
+ *
+ */
+public class SSCClientBuffer {
+
+}

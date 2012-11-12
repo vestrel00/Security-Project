@@ -25,4 +25,6 @@
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.SSCStreamManager"/>
 <fullyQualifiedTypeName name="java.io.EOFException"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.datatypes.SSCBufferClient"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.client.shared.SSCCryptoAES"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.client.shared.SSCStreamManager"/>
 </qualifiedTypeNameHistroy>
