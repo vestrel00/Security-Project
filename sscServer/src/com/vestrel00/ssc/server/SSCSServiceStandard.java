@@ -26,35 +26,39 @@ public class SSCSServiceStandard implements SSCServerService {
 	public SSCSServiceStandard(Socket client) throws IOException {
 		this.client = client;
 		inService = true;
-		protocol = new SSCProtocol();
-		initIOTools();
+		openIO();
+		protocol = new SSCProtocol(in, out);
 	}
 	
-	public void initIOTools() throws IOException {
+	public void openIO() throws IOException {
 		if (out == null) {
-			out = new PrintWriter(client.getOutputStream(), false);
+			out = new PrintWriter(client.getOutputStream(), true);
 			in = new BufferedReader(new InputStreamReader(
 					client.getInputStream()));
 		} else {
-			out.close();
-			in.close();
-			out = null;
-			in = null;
-			initIOTools();
+			closeIO();
+			openIO();
 		}
+	}
+	
+	public void closeIO() throws IOException{
+		out.close();
+		in.close();
+		out = null;
+		in = null;
 	}
 
 	public void stopService() throws IOException {
 		inService = false;
-		out.close();
-		in.close();
+		closeIO();
 		client.close();
 	}
 
 	@Override
 	public void run() {
 		while (inService) {
-			protocol.work();
+			if(!protocol.work())
+				inService = false;
 		}
 		try {
 			stopService();

@@ -31,6 +31,7 @@ public class SSCServerStandard implements SSCServer{
 		while (isListening) {
 			try {
 				Socket newClient = server.accept();
+				System.out.println("Recieved a new client");
 				clientServices.add(new SSCSServiceStandard(newClient));
 				new Thread(clientServices.get(clientServices.size() - 1)).start();
 			} catch (IOException e) {

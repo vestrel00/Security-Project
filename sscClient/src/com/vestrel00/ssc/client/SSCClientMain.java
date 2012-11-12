@@ -1,7 +1,6 @@
 package com.vestrel00.ssc.client;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.UnknownHostException;
 
 /**
@@ -17,6 +16,7 @@ public class SSCClientMain {
 	public static void main(String args[]) throws UnknownHostException,
 			IOException{
 		client = new SSCClient("127.0.0.1", 8080);
+		client.start();
 	}
 
 }

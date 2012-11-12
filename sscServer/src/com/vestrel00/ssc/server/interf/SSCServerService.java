@@ -12,13 +12,20 @@ import java.io.IOException;
 public interface SSCServerService extends Runnable {
 
 	/**
-	 * Initialize the BufferedReader and PrintWriters that will be used for
+	 * Initialize the BufferedReader and PrintWriter that will be used for
 	 * communicating with the client. Closes the in and out streams and creates
 	 * new ones if streams already exist.
 	 * 
 	 * @throws IOException
 	 */
-	public void initIOTools() throws IOException;
+	public void openIO() throws IOException;
+
+	/**
+	 * Closes the in and out streams.
+	 * 
+	 * @throws IOException
+	 */
+	public void closeIO() throws IOException;
 
 	/**
 	 * Close all the streaming connections including the client socket.
@@ -30,8 +37,6 @@ public interface SSCServerService extends Runnable {
 	/**
 	 * Check the state of the service. If the service is still working, the
 	 * protocol is performed.
-	 * 
-	 * @throws IOException
 	 */
 	@Override
 	public void run();
