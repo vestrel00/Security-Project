@@ -1,11 +1,14 @@
 package com.vestrel00.ssc.client;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+
+import com.vestrel00.ssc.client.interf.SSCCrypto;
 
 /**
  * The client that interacts with the server.
@@ -16,14 +19,21 @@ import java.net.UnknownHostException;
 public class SSCClient {
 
 	private Socket socket;
-	private BufferedReader in, userIn;
-	private PrintWriter out;
+	private DataInputStream in;
+	private BufferedReader userIn;
+	private DataOutputStream out;
 	private String userStr;
+	private SSCCrypto crypt;
 
 	public SSCClient(String host, int port) throws UnknownHostException,
 			IOException {
 		socket = new Socket(host, port);
 		initIOTools();
+		try {
+			crypt = new SSCCryptoAES("0123456789abcdef".getBytes());
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -41,9 +51,8 @@ public class SSCClient {
 	 */
 	public void initIOTools() throws IOException {
 		if (out == null) {
-			out = new PrintWriter(socket.getOutputStream(), true);
-			in = new BufferedReader(new InputStreamReader(
-					socket.getInputStream()));
+			out = new DataOutputStream(socket.getOutputStream());
+			in = new DataInputStream(socket.getInputStream());
 			userIn = new BufferedReader(new InputStreamReader(System.in));
 		} else {
 			closeIO();
@@ -74,7 +83,7 @@ public class SSCClient {
 	public void start() throws IOException {
 		// TODO
 		while ((userStr = userIn.readLine()) != null) {
-			out.println(userStr);
+			SSCStreamManager.sendBytes(out, crypt.encrypt(userStr.getBytes()));
 		}
 		finish();
 	}

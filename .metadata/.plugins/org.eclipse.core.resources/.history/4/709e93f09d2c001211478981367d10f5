@@ -1,0 +1,17 @@
+package com.vestrel00.ssc.server.datatypes;
+
+/**
+ * Used for storing buffer related data pertaining to one client.
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public class SSCBufferClient {
+
+	public int id, 
+
+	public SSCBufferID() {
+
+	}
+
+}

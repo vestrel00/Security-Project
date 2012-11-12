@@ -1,0 +1,77 @@
+package com.vestrel00.ssc.server;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * This is used to hold all messages received from all clients. The buffer will
+ * be Strings that are the hash or encrypted value of the message.
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public class SSCServerBuffer {
+
+	private List<String> buffer;
+	private int bufferSize;
+
+	private StringBuilder builder;
+
+	/**
+	 * Create the buffer.
+	 * 
+	 * @param bufferSize
+	 *            The amount of memory this buffer can hold. Used for keeping
+	 *            track of client and server history.
+	 */
+	public SSCServerBuffer(int bufferSize) {
+		this.bufferSize = bufferSize;
+		buffer = new ArrayList<String>();
+		builder = new StringBuilder();
+	}
+
+	/**
+	 * Adds a message to the buffer. Note that adding a message when the buffer
+	 * is full deletes the oldest message (queue/LIFO logic).
+	 * 
+	 * @param message
+	 *            message to be saved in the buffer
+	 */
+	public void add(String message) {
+		if (buffer.size() < bufferSize) {
+			buffer.add(message);
+		} else {
+			buffer.remove(0);
+			buffer.add(message);
+		}
+	}
+
+	/**
+	 * <b>Warning!</b><br>
+	 * Clears all the buffer!
+	 */
+	public void clear() {
+		buffer.clear();
+	}
+
+	/**
+	 * Sets the size of the buffer.
+	 */
+	public void setSize(int bufferSize) {
+		this.bufferSize = bufferSize;
+	}
+
+	/**
+	 * Returns all the messages as strings. Each message is separated by a new
+	 * line from oldest to current.
+	 */
+	@Override
+	public String toString() {
+		builder.delete(0, builder.length());
+		for (String str : buffer) {
+			builder.append(new String(b));
+			builder.append("\n");
+		}
+		return builder.toString();
+	}
+}

@@ -1,7 +1,0 @@
-package com.vestrel00.ssc.client;
-
-public class SSCClient {
-
-	private Socket socket;
-
-}

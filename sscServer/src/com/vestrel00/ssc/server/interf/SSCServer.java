@@ -2,6 +2,8 @@ package com.vestrel00.ssc.server.interf;
 
 import java.io.IOException;
 
+import com.vestrel00.ssc.server.SSCServerBuffer;
+
 /**
  * <p>
  * The main server. This runnable forever listens for client socket connection
@@ -34,6 +36,12 @@ public interface SSCServer {
 	 * 
 	 * @throws IOException
 	 */
-	public void stopListening() throws IOException;
+	public void stopListening();
+
+	/**
+	 * 
+	 * @return the buffer in use
+	 */
+	public SSCServerBuffer getBuffer();
 
 }

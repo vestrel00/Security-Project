@@ -1,0 +1,16 @@
+package com.vestrel00.ssc.server.datatypes;
+
+/**
+ * Used for storing buffer related data for polling.
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public class SSCBufferID {
+	public int id;
+
+	public SSCBufferId() {
+
+	}
+
+}

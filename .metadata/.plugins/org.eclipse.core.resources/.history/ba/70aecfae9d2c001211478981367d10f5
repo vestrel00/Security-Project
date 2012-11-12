@@ -1,0 +1,10 @@
+package com.vestrel00.ssc.server.datatypes;
+
+public class SSCBufferForm {
+	public int id;
+	
+	public SSCBufferId(){
+		
+	}
+
+}

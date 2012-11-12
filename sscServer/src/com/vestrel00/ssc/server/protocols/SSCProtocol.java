@@ -1,8 +1,13 @@
 package com.vestrel00.ssc.server.protocols;
 
-import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
+
+import com.vestrel00.ssc.server.SSCCryptoAES;
+import com.vestrel00.ssc.server.SSCStreamManager;
+import com.vestrel00.ssc.server.interf.SSCCrypto;
+import com.vestrel00.ssc.server.interf.SSCServerService;
 
 /**
  * <p>
@@ -21,22 +26,30 @@ import java.io.PrintWriter;
  */
 public class SSCProtocol {
 
-	/*
-	 * Note: streams connections are closed by the service.
-	 * Not the protocol.
+	/**
+	 * Note: streams connections are closed by the service. Not the protocol.
 	 */
-	private BufferedReader in;
-	private PrintWriter out;
-	private String inStr;
+	private DataInputStream in;
+	private DataOutputStream out;
+	private byte[] inData;
+	private SSCServerService service;
+	private SSCCrypto crypt;
 	private boolean isWorking;
 
 	/**
 	 * Initialize the protocol.
 	 */
-	public SSCProtocol(BufferedReader in, PrintWriter out) {
+	public SSCProtocol(SSCServerService service, DataInputStream in,
+			DataOutputStream out) {
+		this.service = service;
 		this.in = in;
 		this.out = out;
 		isWorking = true;
+		try {
+			crypt = new SSCCryptoAES("0123456789abcdef".getBytes());
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -44,28 +57,28 @@ public class SSCProtocol {
 	 * quits, this returns false, flagging the service to stop.
 	 */
 	public boolean work() {
-		try {
-			if (isWorking && (inStr = in.readLine()) != null)
-				processStr();
+		if (isWorking) {
+			processData();
 			return true;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return false;
+		} else
+			return false;
 	}
 
 	/**
 	 * This is where the magic of the protocol happens.<br>
 	 * Process the string received from the client.<br>
 	 * The string may be a password, username, service request, or anything that
-	 * this protocol can offer.
+	 * this protocol can offer. This may end the service/connection if the
+	 * client closes the program abruptly.
 	 */
-	private void processStr() {
-		// TODO
-		if (inStr.contentEquals("quit"))
+	private void processData() {
+		try {
+			inData = SSCStreamManager.readBytes(in);
+			// TODO it works, now use the buffer to store this!
+			System.out.println(new String(crypt.decrypt(inData)));
+		} catch (IOException e) {
 			isWorking = false;
-		else
-			System.out.println(inStr);
+		}
 	}
 
 }

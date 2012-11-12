@@ -1,3 +1,6 @@
 username
 estrellado
 vandolf
+decrypt
+decrypted
+crypto

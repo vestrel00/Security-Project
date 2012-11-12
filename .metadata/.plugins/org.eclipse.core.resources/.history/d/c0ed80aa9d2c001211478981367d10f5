@@ -1,0 +1,6 @@
+package com.vestrel00.ssc.server.datatypes;
+
+public class SSCBufferID {
+	public int id;
+
+}

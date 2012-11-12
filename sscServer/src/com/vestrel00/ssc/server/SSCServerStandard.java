@@ -11,19 +11,22 @@ import com.vestrel00.ssc.server.interf.SSCServerService;
 
 /**
  * An implementation of an SSCServer.
+ * 
  * @author Estrellado, Vandolf
  * @see SSCServer
- *
+ * 
  */
-public class SSCServerStandard implements SSCServer{
+public class SSCServerStandard implements SSCServer {
 
 	private ServerSocket server;
 	private List<SSCServerService> clientServices;
+	private SSCServerBuffer buffer;
 	private boolean isListening;
 
 	public SSCServerStandard(int port) throws IOException {
 		server = new ServerSocket(port);
 		clientServices = new ArrayList<SSCServerService>();
+		buffer = new SSCServerBuffer(10);
 		isListening = true;
 	}
 
@@ -32,27 +35,30 @@ public class SSCServerStandard implements SSCServer{
 			try {
 				Socket newClient = server.accept();
 				System.out.println("Recieved a new client");
-				clientServices.add(new SSCSServiceStandard(newClient));
-				new Thread(clientServices.get(clientServices.size() - 1)).start();
+				clientServices.add(new SSCSServiceStandard(this, newClient));
+				new Thread(clientServices.get(clientServices.size() - 1))
+						.start();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+		stopListening();
+	}
+
+	public void stopListening() {
+		isListening = false;
 		try {
-			stopListening();
+			server.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public void stopListening() throws IOException {
-		isListening = false;
-		server.close();
-		for(int i=0; i<clientServices.size();i++){
+		for (int i = 0; i < clientServices.size(); i++) {
 			clientServices.get(i).stopService();
 		}
 	}
 
-
+	public SSCServerBuffer getBuffer() {
+		return buffer;
+	}
 
 }

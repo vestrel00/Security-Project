@@ -1,0 +1,11 @@
+package com.vestrel00.ssc.client.interf;
+
+/**
+ * Asymmetric encryption for the SSC protocol.
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public interface SSCCrypto {
+
+}

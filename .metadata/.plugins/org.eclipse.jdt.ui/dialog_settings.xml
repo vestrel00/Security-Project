@@ -13,9 +13,9 @@
 	</section>
 	<section name="DialogBounds_OverrideMethodDialog">
 		<item value="628" key="DIALOG_WIDTH"/>
-		<item value="32" key="DIALOG_Y_ORIGIN"/>
-		<item value="609" key="DIALOG_HEIGHT"/>
+		<item value="27" key="DIALOG_Y_ORIGIN"/>
 		<item value="369" key="DIALOG_X_ORIGIN"/>
+		<item value="609" key="DIALOG_HEIGHT"/>
 		<item value="1|Cantarell|11.0|0|GTK|1|" key="DIALOG_FONT_NAME"/>
 	</section>
 	<section name="OverrideMethodDialog">
@@ -43,8 +43,8 @@
 	<section name="quick_assist_proposal_size">
 	</section>
 	<section name="SourceActionDialog.methods">
-		<item value="false" key="Comments"/>
 		<item value="1" key="VisibilityModifier"/>
+		<item value="false" key="Comments"/>
 		<item value="false" key="SynchronizedModifier"/>
 		<item value="false" key="FinalModifier"/>
 	</section>
@@ -62,16 +62,16 @@
 	</section>
 	<section name="JavaElementSearchActions">
 	</section>
+	<section name="NewClassWizardPage">
+		<item value="false" key="create_constructor"/>
+		<item value="false" key="create_main"/>
+		<item value="true" key="create_unimplemented"/>
+	</section>
 	<section name="SearchInDialog">
 		<item value="true" key="SearchInJRE"/>
 		<item value="true" key="SearchInProjects"/>
 		<item value="true" key="SearchInAppLibs"/>
 		<item value="true" key="SearchInSources"/>
-	</section>
-	<section name="NewClassWizardPage">
-		<item value="false" key="create_constructor"/>
-		<item value="true" key="create_unimplemented"/>
-		<item value="false" key="create_main"/>
 	</section>
 	<section name="CallHierarchySearchScope">
 	</section>

@@ -1,0 +1,37 @@
+package com.vestrel00.ssc.client;
+
+import com.vestrel00.ssc.client.interf.SSCCrypto;
+
+/**
+ * Simple asymmetric crypto using AES.
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public class SSCCryptoAES implements SSCCrypto {
+
+	private byte[] key;
+
+	/**
+	 * 
+	 * @param key
+	 *            should be given by server to client and stored in a database
+	 *            in encrypted form with salt.
+	 */
+	public SSCCryptoAES(byte[] key) {
+		this.key = key;
+
+	}
+
+	public byte[] encrypt(byte[] message) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public byte[] decrypt(byte[] message) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}
