@@ -1,6 +1,7 @@
 package com.vestrel00.ssc.server.interf;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.vestrel00.ssc.server.SSCServerBuffer;
 
@@ -43,5 +44,17 @@ public interface SSCServer {
 	 * @return the buffer in use
 	 */
 	public SSCServerBuffer getBuffer();
+
+	/**
+	 * 
+	 * @return the service with the given id.
+	 */
+	public SSCServerService getServiceById(int destServiceId);
+
+	/**
+	 * 
+	 * @return the current list of services.
+	 */
+	public List<SSCServerService> getClientServices();
 
 }

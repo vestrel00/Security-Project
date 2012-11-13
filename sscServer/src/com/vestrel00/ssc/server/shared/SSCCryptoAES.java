@@ -22,11 +22,7 @@ public class SSCCryptoAES implements SSCCrypto {
 	private Cipher cipher;
 	private SecretKeySpec spec;
 	private byte[] key;
-
-	/**
-	 * Codes
-	 */
-	public static String OK;
+	private String confirmCode;
 
 	/**
 	 * Create the crypto instance. All parameters must be the same as the
@@ -36,19 +32,20 @@ public class SSCCryptoAES implements SSCCrypto {
 	 *            should be given by server to client and stored in a database
 	 *            in encrypted form with salt. The key is a byte array of length
 	 *            16.
-	 * @param keyCodeOK
-	 *            an instance of the keyCodeOK
+	 * @param confirmCode
+	 *            an instance of the confirmCode
 	 * 
 	 * @throws InvalidKeyLengthException
 	 */
-	public SSCCryptoAES(byte[] key, String keyCodeOK)
+	public SSCCryptoAES(byte[] key, String confirmCode)
 			throws IllegalArgumentException {
 		if (key.length != 16)
 			throw new IllegalArgumentException("length of key must = 16");
 		this.key = key;
-		OK = keyCodeOK;
+		this.confirmCode = confirmCode;
 	}
 
+	@Override
 	public byte[] encrypt(byte[] message) {
 		try {
 			perform(Cipher.ENCRYPT_MODE);
@@ -61,6 +58,7 @@ public class SSCCryptoAES implements SSCCrypto {
 		return null;
 	}
 
+	@Override
 	public byte[] decrypt(byte[] message) {
 		try {
 			perform(Cipher.DECRYPT_MODE);
@@ -78,6 +76,11 @@ public class SSCCryptoAES implements SSCCrypto {
 		cipher = Cipher.getInstance("AES");
 		spec = new SecretKeySpec(key, "AES");
 		cipher.init(mode, spec);
+	}
+
+	@Override
+	public String getConfirmCode() {
+		return confirmCode;
 	}
 
 }

@@ -1,9 +1,11 @@
 package com.vestrel00.ssc.server.protocols;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import com.vestrel00.ssc.server.shared.SSCCryptoAES;
+import com.vestrel00.ssc.server.shared.SSCStreamManager;
 import com.vestrel00.ssc.server.interf.SSCCrypto;
 import com.vestrel00.ssc.server.interf.SSCProtocol;
 import com.vestrel00.ssc.server.interf.SSCServerService;
@@ -23,6 +25,9 @@ public class SSCServerProtocol implements SSCProtocol {
 	/**
 	 * Initialize the protocol but without initializing the crypto. Must
 	 * manually call initCrypto if this constructor is used!
+	 * 
+	 * @param service
+	 *            the service that launched this protocol.
 	 */
 	public SSCServerProtocol(SSCServerService service) {
 		this.service = service;
@@ -31,6 +36,16 @@ public class SSCServerProtocol implements SSCProtocol {
 
 	/**
 	 * Initialize the protocol including the crypto.
+	 * 
+	 * @param service
+	 *            the service that launched this protocol.
+	 * @param serverBufferId
+	 * @param secretKey
+	 *            the key that the destination client and the client of this
+	 *            service agreed upon.
+	 * @param keyCodeOK
+	 *            the keyCode agreed upon by the destination client and this
+	 *            service's client.
 	 */
 	public SSCServerProtocol(SSCServerService service, String secretKey,
 			String keyCodeOK) {
@@ -38,6 +53,16 @@ public class SSCServerProtocol implements SSCProtocol {
 		initCrypto(secretKey, keyCodeOK);
 	}
 
+	/**
+	 * Initialize the crypto that will be used.
+	 * 
+	 * @param secretKey
+	 *            the key that the destination client and the client of this
+	 *            service agreed upon.
+	 * @param keyCodeOK
+	 *            the keyCode agreed upon by the destination client and this
+	 *            service's client.
+	 */
 	@Override
 	public void initCrypto(String secretKey, String keyCodeOK) {
 		try {
@@ -56,9 +81,38 @@ public class SSCServerProtocol implements SSCProtocol {
 		return false;
 	}
 
+	/**
+	 * Wait for E(m) and H(m) from the client. Authenticate and if everything
+	 * checks out, store m in the client's buffer and forward E(m) and H(m) to
+	 * the service which handles the destination client.
+	 */
 	@Override
 	public void performMagic() {
-
+		try {
+			// Wait for E(m)
+			byte[] em = SSCStreamManager.readBytes(service.getInputStream());
+			// tell client that it has been received
+			SSCStreamManager.sendBytes(service.getOutputStream(),
+					crypt.encrypt(crypt.getConfirmCode().getBytes()));
+			// Wait for H(m)
+			byte[] hm = SSCStreamManager.readBytes(service.getInputStream());
+			// m
+			byte[] m = crypt.decrypt(em);
+			// H(E(m))
+			byte[] hem = MessageDigest.getInstance("SHA-1").digest(m);
+			// authenticate
+			if (hem.length != hm.length)
+				return;
+			for (int index = 0; index < hm.length; index++) {
+				if (hm[index] != hem[index]) // E(m) was tampered with
+					return;
+			}
+			// Everything checked out
+			service.addMessageToBuffer(m);
+			service.forwardMessageToService(service.getDestService(), hem, hm);
+		} catch (IOException | NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override

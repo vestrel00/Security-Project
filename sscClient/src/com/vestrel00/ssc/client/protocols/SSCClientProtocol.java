@@ -24,6 +24,7 @@ public class SSCClientProtocol implements SSCProtocol {
 
 	public SSCClientProtocol(SSCClient client) {
 		this.client = client;
+		isWorking = true;
 	}
 
 	/**
@@ -54,20 +55,19 @@ public class SSCClientProtocol implements SSCProtocol {
 	}
 
 	/**
-	 * Initialize the protocol and starts listening for SERVER input. Listens
-	 * for E(m) and H(m) which the server forwards from user to user. If
+	 * Listens for E(m) and H(m) which the server forwards from user to user. If
 	 * H(D(E(m)) == H(m) store the message in the buffer and print out to user.
 	 * Otherwise, it has been tampered - ignore it.
 	 */
 	@Override
 	public void performMagic() {
-		// Wait for E(m)
-		byte[] em;
 		try {
-			em = SSCStreamManager.readBytes(client.getServerInputStream());
+			// Wait for E(m)
+			byte[] em = SSCStreamManager.readBytes(client
+					.getServerInputStream());
 			// tell server that it has been received
 			SSCStreamManager.sendBytes(client.getOutputStream(),
-					crypt.encrypt(SSCCryptoAES.OK.getBytes()));
+					crypt.encrypt(crypt.getConfirmCode().getBytes()));
 			// Wait for H(m)
 			byte[] hm = SSCStreamManager.readBytes(client
 					.getServerInputStream());
@@ -76,9 +76,11 @@ public class SSCClientProtocol implements SSCProtocol {
 			// H(E(m))
 			byte[] hem = MessageDigest.getInstance("SHA-1").digest(m);
 			// authenticate
+			if (hem.length != hm.length)
+				return;
 			for (int index = 0; index < hm.length; index++) {
 				if (hm[index] != hem[index]) // E(m) was tampered with
-					continue;
+					return;
 			}
 			// Everything checked out
 			client.getBuffer().add(new String(m));
@@ -91,7 +93,7 @@ public class SSCClientProtocol implements SSCProtocol {
 	public void stopWorking() {
 		isWorking = false;
 	}
-	
+
 	@Override
 	public SSCCrypto getCrypto() {
 		return crypt;

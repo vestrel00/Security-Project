@@ -24,4 +24,10 @@ public interface SSCCrypto {
 	 */
 	public byte[] decrypt(byte[] message);
 
+	/**
+	 * 
+	 * @return the stored confirm code
+	 */
+	public String getConfirmCode();
+
 }

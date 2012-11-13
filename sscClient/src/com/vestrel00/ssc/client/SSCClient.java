@@ -11,6 +11,8 @@ import java.security.NoSuchAlgorithmException;
 
 import com.vestrel00.ssc.client.interf.SSCProtocol;
 import com.vestrel00.ssc.client.protocols.SSCClientProtocol;
+import com.vestrel00.ssc.client.protocols.SSCUserIS;
+import com.vestrel00.ssc.client.shared.SSCStreamManager;
 
 /**
  * The client that interacts with the server.
@@ -33,7 +35,7 @@ public class SSCClient {
 	private boolean isRunning;
 
 	/**
-	 * Constructor
+	 * Constructor. Immediately invokes the login protocol.
 	 */
 	public SSCClient(String host, int port, int maxBufferSize)
 			throws UnknownHostException, IOException {
@@ -82,15 +84,51 @@ public class SSCClient {
 	}
 
 	/**
-	 * Initialize the protocol and starts listening for SERVER input and user
+	 * Perform the login protocol with the server service using RSA.
+	 * 
+	 * @return true if success.
+	 * @throws IOException
+	 */
+	// TODO replace with actual implementation
+	private boolean login() throws IOException {
+		int attempts = 0;
+		System.out.println(new String(SSCStreamManager.readBytes(in)));
+		SSCStreamManager.sendBytes(out, userIn.readLine().getBytes());
+		System.out.println(new String(SSCStreamManager.readBytes(in)));
+		SSCStreamManager.sendBytes(out, userIn.readLine().getBytes());
+		while (attempts < 3) {
+			System.out.println(new String(SSCStreamManager.readBytes(in)));
+			SSCStreamManager.sendBytes(out, userIn.readLine().getBytes());
+			if (new String(SSCStreamManager.readBytes(in))
+					.contentEquals("good"))
+				return true;
+			else
+				attempts++;
+		}
+		return false;
+	}
+
+	/**
+	 * Initialize the protocols and starts listening for SERVER input and user
 	 * input.
 	 * 
 	 */
 	public void start() throws IOException, NoSuchAlgorithmException {
+		if (!login()) {
+			System.out.println("Failed to login. Exiting system...");
+			System.exit(1);
+		}
+		// login succeeded now connect to another client that is also logged in
+		// the server. Perform the client-client connection protocol with the
+		// server service- TODO
 		protocol = new SSCClientProtocol(this, "0123456789abcdef",
 				"kkjf9934ihssj");
+
+		// now connected with another user
+		// launch the user input thread
 		userIStream = new SSCUserIS(this);
 		new Thread(userIStream).start();
+		// this thread will remain listening for input from the other user
 		while (isRunning) {
 			if (!protocol.work())
 				isRunning = false;
