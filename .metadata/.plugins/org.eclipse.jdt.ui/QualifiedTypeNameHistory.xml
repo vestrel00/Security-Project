@@ -10,16 +10,12 @@
 <fullyQualifiedTypeName name="java.io.IOException"/>
 <fullyQualifiedTypeName name="java.net.Socket"/>
 <fullyQualifiedTypeName name="java.net.ConnectException"/>
-<fullyQualifiedTypeName name="java.io.BufferedReader"/>
 <fullyQualifiedTypeName name="java.io.PrintWriter"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.interf.SSCServer"/>
-<fullyQualifiedTypeName name="java.util.List"/>
-<fullyQualifiedTypeName name="java.util.ArrayList"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.SSCServerBuffer"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.interf.SSCServerService"/>
 <fullyQualifiedTypeName name="javax.crypto.spec.SecretKeySpec"/>
 <fullyQualifiedTypeName name="javax.crypto.Cipher"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.client.interf.SSCCrypto"/>
 <fullyQualifiedTypeName name="java.io.DataInputStream"/>
 <fullyQualifiedTypeName name="java.io.DataOutputStream"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.SSCStreamManager"/>
@@ -27,4 +23,14 @@
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.datatypes.SSCBufferClient"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.client.shared.SSCCryptoAES"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.client.shared.SSCStreamManager"/>
+<fullyQualifiedTypeName name="java.util.List"/>
+<fullyQualifiedTypeName name="java.util.ArrayList"/>
+<fullyQualifiedTypeName name="java.io.BufferedReader"/>
+<fullyQualifiedTypeName name="java.security.MessageDigest"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.server.interf.SSCProtocol"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.server.protocols.SSCServerProtocol"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.client.SSCClient"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.client.interf.SSCCrypto"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.client.interf.SSCProtocol"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.client.protocols.SSCClientProtocol"/>
 </qualifiedTypeNameHistroy>

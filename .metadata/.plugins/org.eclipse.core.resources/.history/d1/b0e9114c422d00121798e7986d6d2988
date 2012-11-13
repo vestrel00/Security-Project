@@ -1,0 +1,5 @@
+package com.vestrel00.ssc.client.interf;
+
+public class SSCProtocol {
+
+}

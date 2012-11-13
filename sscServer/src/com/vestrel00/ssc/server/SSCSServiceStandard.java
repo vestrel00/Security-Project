@@ -7,7 +7,8 @@ import java.net.Socket;
 
 import com.vestrel00.ssc.server.interf.SSCServer;
 import com.vestrel00.ssc.server.interf.SSCServerService;
-import com.vestrel00.ssc.server.protocols.SSCProtocol;
+import com.vestrel00.ssc.server.interf.SSCProtocol;
+import com.vestrel00.ssc.server.protocols.SSCServerProtocol;
 
 /**
  * An implementation of the SSCServerService.
@@ -57,21 +58,27 @@ public class SSCSServiceStandard implements SSCServerService {
 	}
 
 	public void closeIO() {
-		try {
-			out.close();
-			in.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (out != null) {
+			try {
+				out.close();
+				in.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			out = null;
+			in = null;
 		}
-		out = null;
-		in = null;
 	}
 
 	public void stopService() {
 		inService = false;
 		closeIO();
+		// not necessary since this is running on the same thread but..
+		protocol.stopWorking();
 		try {
-			client.close();
+			if (client != null)
+				client.close();
+			client = null;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -79,7 +86,8 @@ public class SSCSServiceStandard implements SSCServerService {
 
 	@Override
 	public void run() {
-		protocol = new SSCProtocol(this, in, out);
+		protocol = new SSCServerProtocol(this, "0123456789abcdef",
+				"kkjf9934ihssj");
 		while (inService) {
 			if (!protocol.work())
 				inService = false;
@@ -94,7 +102,7 @@ public class SSCSServiceStandard implements SSCServerService {
 	@Override
 	public void forwardMessageTo(SSCServerService service, byte[] message) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

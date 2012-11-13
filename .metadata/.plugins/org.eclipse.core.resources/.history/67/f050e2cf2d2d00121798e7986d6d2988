@@ -1,0 +1,31 @@
+package com.vestrel00.ssc.client;
+
+import java.io.BufferedReader;
+
+/**
+ * Runnable that handles user input. This is necessary since client program must
+ * listen for user input and server input.
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public class SSCUserIS implements Runnable {
+
+	private BufferedReader userIn;
+
+	/**
+	 * Initialize. userIn is closed and opened by the SSCClient
+	 * 
+	 * @see SSCClient
+	 */
+	public SSCUserIS(BufferedReader userIn) {
+		this.userIn = userIn;
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+
+	}
+
+}

@@ -1,0 +1,26 @@
+package com.vestrel00.ssc.client;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Holds all incoming and outgoing messages as plain text. This is quite
+ * different from the server buffer, which is more complex.
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public class SSCClientBuffer {
+	
+	private List<String> buffer;
+	private int maxSize;
+	
+	public SSCClientBuffer(){
+		buffer = new ArrayList<String>();
+	}
+	
+	public void add(String message){
+		
+	}
+	
+}

@@ -4,7 +4,8 @@ import java.io.IOException;
 
 /**
  * The server's response to a client connection request. This service is
- * dedicated to performing the protocol for the client.
+ * dedicated to performing the protocol for the client and synchronizing with
+ * the server that launched tis service.
  * 
  * @author Estrellado, Vandolf
  * 

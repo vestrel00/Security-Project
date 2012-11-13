@@ -1,0 +1,57 @@
+package com.vestrel00.ssc.client;
+
+import java.io.IOException;
+
+import com.vestrel00.ssc.client.shared.SSCCryptoAES;
+import com.vestrel00.ssc.client.shared.SSCStreamManager;
+
+/**
+ * Runnable that handles user input. This is necessary since client program must
+ * listen for user input and server input.
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public class SSCUserIS implements Runnable {
+
+	private SSCClient client;
+	private String userStr;
+
+	public SSCUserIS(SSCClient client) {
+		this.client = client;
+	}
+
+	/**
+	 * Starts listening for USER input. User input is streamed out to the server
+	 * service. <br>
+	 * <b>Procedure: </b>
+	 * <ol>
+	 * <li>E(m) is sent to server</li>
+	 * <li>Client waits for server OK</li>
+	 * <li>Client sends H(m)</li>
+	 * </ol>
+	 * 
+	 * @throws IOException
+	 */
+	@Override
+	public void run() {
+			while ((userStr = client.getUserInputStream().readLine()) != null) {
+				client.getBuffer().add(userStr);
+				// send E(m)
+				SSCStreamManager.sendBytes(client.getOutputStream(), crypt.encrypt(userStr.getBytes()));
+
+				// wait for server E(OK)
+				String resultCode = new String(crypt.decrypt(SSCStreamManager
+						.readBytes(in)));
+
+				if (resultCode.contentEquals(SSCCryptoAES.OK)) // TODO USE BASE64
+					SSCStreamManager.sendBytes(out,
+							crypt.encrypt(userStr.getBytes()));
+				else
+					// something went wrong - do nothing
+					continue;
+
+		}
+	}
+
+}

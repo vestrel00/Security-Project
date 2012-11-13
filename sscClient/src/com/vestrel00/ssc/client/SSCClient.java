@@ -7,10 +7,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.NoSuchAlgorithmException;
 
-import com.vestrel00.ssc.client.interf.SSCCrypto;
-import com.vestrel00.ssc.client.shared.SSCCryptoAES;
-import com.vestrel00.ssc.client.shared.SSCStreamManager;
+import com.vestrel00.ssc.client.interf.SSCProtocol;
+import com.vestrel00.ssc.client.protocols.SSCClientProtocol;
 
 /**
  * The client that interacts with the server.
@@ -20,23 +20,27 @@ import com.vestrel00.ssc.client.shared.SSCStreamManager;
  */
 public class SSCClient {
 
-	private Socket socket;
-	private DataInputStream in;
+	/**
+	 * User input stream is running on a separate thread;
+	 */
 	private BufferedReader userIn;
+	private DataInputStream in;
 	private DataOutputStream out;
-	private String userStr;
-	private SSCCrypto crypt;
+	private Socket socket;
+	private SSCClientBuffer buffer;
+	private SSCProtocol protocol;
+	private SSCUserIS userIStream;
+	private boolean isRunning;
 
-	public SSCClient(String host, int port) throws UnknownHostException,
-			IOException {
+	/**
+	 * Constructor
+	 */
+	public SSCClient(String host, int port, int maxBufferSize)
+			throws UnknownHostException, IOException {
 		socket = new Socket(host, port);
+		buffer = new SSCClientBuffer(maxBufferSize);
+		isRunning = true;
 		initIOTools();
-		try {
-			// TODO parameterize
-			crypt = new SSCCryptoAES("0123456789abcdef".getBytes(), "kkjf9934ihssj");
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		}
 	}
 
 	/**
@@ -78,48 +82,53 @@ public class SSCClient {
 	}
 
 	/**
-	 * Starts listening for user input. User input is streamed out to the server
-	 * service. <br>
-	 * <b>Procedure: </b>
-	 * <ol>
-	 * <li>E(m) is sent to server</li>
-	 * <li>Client waits for server OK</li>
-	 * <li>Client sends H(m)</li>
-	 * </ol>
+	 * Initialize the protocol and starts listening for SERVER input and user
+	 * input.
 	 * 
-	 * @throws IOException
 	 */
-	public void start() throws IOException {
-		// TODO
-		while ((userStr = userIn.readLine()) != null) {
-			// TODO store in the Client buffer
-			// send E(m)
-			SSCStreamManager.sendBytes(out, crypt.encrypt(userStr.getBytes()));
-			/*
-			// wait for server OK
-			String resultCode = new String(crypt.decrypt(SSCStreamManager
-					.readBytes(in)));
-
-			if (resultCode.contentEquals(SSCCryptoAES.OK))
-				// TODO USE BASE64
-				SSCStreamManager.sendBytes(out,
-						crypt.encrypt(userStr.getBytes()));
-			else
-				// something went wrong - do nothing
-				continue;
-				*/
+	public void start() throws IOException, NoSuchAlgorithmException {
+		protocol = new SSCClientProtocol(this, "0123456789abcdef",
+				"kkjf9934ihssj");
+		userIStream = new SSCUserIS(this);
+		new Thread(userIStream).start();
+		while (isRunning) {
+			if (!protocol.work())
+				isRunning = false;
 		}
 		finish();
 	}
 
 	/**
-	 * Finish the client program, closing all the streams.
+	 * Finish the client program, closing all the streams and stopping the
+	 * protocol.
 	 * 
 	 * @throws IOException
 	 */
 	public void finish() throws IOException {
 		closeIO();
 		socket.close();
+		// not really necessary since this has no effect
+		protocol.stopWorking();
+	}
+
+	public BufferedReader getUserInputStream() {
+		return userIn;
+	}
+
+	public SSCClientBuffer getBuffer() {
+		return buffer;
+	}
+
+	public DataOutputStream getOutputStream() {
+		return out;
+	}
+
+	public DataInputStream getServerInputStream() {
+		return in;
+	}
+
+	public SSCProtocol getClientProtocol() {
+		return protocol;
 	}
 
 }

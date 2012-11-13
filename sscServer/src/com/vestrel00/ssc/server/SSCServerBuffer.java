@@ -68,13 +68,11 @@ public class SSCServerBuffer {
 	 *            message to be saved in the buffer
 	 */
 	public void add(byte[] message, int bufferId) {
-		if (buffers.get(bufferId).size() < clients.get(bufferId)
-				.getBufferSize()) {
-			buffers.get(bufferId).add(message);
-		} else {
+		if (buffers.get(bufferId).size() >= clients.get(bufferId)
+				.getBufferSize())
 			buffers.get(bufferId).remove(0);
-			buffers.get(bufferId).add(message);
-		}
+		buffers.get(bufferId).add(message);
+
 	}
 
 	/**
@@ -86,8 +84,11 @@ public class SSCServerBuffer {
 			l.clear();
 	}
 
+	/**
+	 * Clears the buffer of the client buffer with the given id.
+	 */
 	public void clear(int bufferId) {
-
+		buffers.get(bufferId).clear();
 	}
 
 	/**
@@ -96,7 +97,7 @@ public class SSCServerBuffer {
 	 * the maximum set by the server.
 	 * 
 	 */
-	public void setSize(int bufferSize, int bufferId) {
+	public void setMaxSize(int bufferSize, int bufferId) {
 		if (bufferSize < maxClientBufferSize)
 			clients.get(bufferId).setBufferSize(bufferSize);
 		else
