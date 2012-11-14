@@ -15,7 +15,8 @@ import java.io.IOException;
 public interface SSCServerService extends Runnable {
 
 	/**
-	 * Close all the streaming connections including the client socket.
+	 * Close all the streaming connections including the client socket. Also
+	 * removes the service from the server.
 	 * 
 	 * @throws IOException
 	 */
@@ -60,22 +61,34 @@ public interface SSCServerService extends Runnable {
 			byte[] hm);
 
 	/**
-	 * Initialize the protocol with the given destination serviceId and agreed
-	 * upon secretKey and confirmCode. All of the parameters are instanced (not
-	 * saved in server database)
-	 */
-	public void initProtocol(int serviceId, String secretKey, String confirmCode);
-
-	/**
 	 * 
-	 * @return the destination service (the service that the messages will be
+	 * @return the other client's service (the service that the messages will be
 	 *         sent to).
 	 */
-	public SSCServerService getDestService();
+	public SSCServerService getOtherClientService();
 
 	/**
 	 * Adds the given message to the buffer in the server.
 	 */
 	public void addMessageToBuffer(byte[] m);
+
+	/**
+	 * 
+	 * @return the name of the client that is logged in.
+	 */
+	public String getClientName();
+
+	/**
+	 * 
+	 * @return the other client name that this service's client wants to chat
+	 *         with.
+	 */
+	public String getOtherClientName();
+
+	/**
+	 * 
+	 * @return true if this service's client is already in chat with another
+	 */
+	public boolean isInChat();
 
 }

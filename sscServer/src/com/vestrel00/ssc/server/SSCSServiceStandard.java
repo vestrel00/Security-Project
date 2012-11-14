@@ -4,7 +4,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Random;
 
 import com.vestrel00.ssc.server.interf.SSCServer;
 import com.vestrel00.ssc.server.interf.SSCServerService;
@@ -25,29 +24,34 @@ public class SSCSServiceStandard implements SSCServerService {
 	private SSCProtocol protocol;
 	private SSCServer serverClass;
 	private Socket client;
-	private SSCServerService destinationService;
+	private SSCServerService otherClientService;
 	private DataInputStream in;
 	private DataOutputStream out;
-	private boolean inService;
+	private boolean inService, isInChat;
 	private int serviceId, serverBufferId;
-	private Random rand;
+	private String clientName, otherClientName;
 
 	/**
-	 * Create the service asking the client to login or create new account.
+	 * Create the service.
 	 * 
 	 * @param serverClass
 	 *            The server which launched this service.
 	 * @param client
 	 *            The client that will be serviced.
-	 * @throws IOException
 	 */
-	public SSCSServiceStandard(SSCServer serverClass, Socket client)
-			throws IOException {
+	public SSCSServiceStandard(SSCServer serverClass, Socket client) {
 		this.serverClass = serverClass;
 		this.client = client;
+	}
+
+	/**
+	 * Allocate buffer space in server, get session id, open IO connections, and
+	 * initialize other variables.
+	 */
+	private void init() {
+		serviceId = serverClass.getSessionId();
 		serverBufferId = serverClass.getBuffer().allocate(10);
 		inService = true;
-		rand = new Random();
 		openIO();
 	}
 
@@ -68,12 +72,18 @@ public class SSCSServiceStandard implements SSCServerService {
 				"Login or Create new account?".getBytes());
 		String choice = new String(SSCStreamManager.readBytes(in));
 		if (choice.contentEquals("login")) {
-			SSCStreamManager.sendBytes(out, "Enter username".getBytes());
-			String uname = new String(SSCStreamManager.readBytes(in));
 			while (attempts < 3) {
+				SSCStreamManager.sendBytes(out, "Enter username".getBytes());
+				String uname = new String(SSCStreamManager.readBytes(in));
 				SSCStreamManager.sendBytes(out, "Enter password".getBytes());
 				String pass = new String(SSCStreamManager.readBytes(in));
 				if (true) {// if(database.authenticate(uname, pass))
+					if (serverClass.clientIsOnline(uname, false)) {
+						attempts++;
+						SSCStreamManager.sendBytes(out, "bad".getBytes());
+						continue;
+					}
+					clientName = uname;
 					SSCStreamManager.sendBytes(out, "good".getBytes());
 					return true;
 				} else {
@@ -83,13 +93,13 @@ public class SSCSServiceStandard implements SSCServerService {
 			}
 			return false;
 		} else if (choice.contentEquals("create"))
-			return create();
+			return createAccount();
 		else
 			return false;
 
 	}
 
-	private boolean create() {
+	private boolean createAccount() {
 		// TODO store in database H(m) and the salt
 		return true;
 	}
@@ -136,6 +146,7 @@ public class SSCSServiceStandard implements SSCServerService {
 	public void stopService() {
 		inService = false;
 		closeIO();
+		serverClass.removeService(clientName);
 		// not necessary since this is running on the same thread but..
 		if (protocol != null)
 			protocol.stopWorking();
@@ -149,27 +160,56 @@ public class SSCSServiceStandard implements SSCServerService {
 	}
 
 	@Override
-	public void initProtocol(int destServiceId, String secretKey,
-			String confirmCode) {
-		protocol = new SSCServerProtocol(this, secretKey, confirmCode);
-		destinationService = serverClass.getServiceById(destServiceId);
-	}
-
-	@Override
 	public void run() {
+		init();
 		try {
 			login();
+			connect();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		// login succeeded now connect to another client that is also logged in
-		// the server. Perform the client-client connection protocol with the
-		// server service- TODO call initProtocol() here
-		while (inService) {
+
+		while (inService && client.isOutputShutdown()) {
 			if (protocol != null && !protocol.work())
 				inService = false;
 		}
 		stopService();
+	}
+
+	/**
+	 * login succeeded now connect to another client that is also logged in the
+	 * server. Perform the client-client connection protocol with the server
+	 * service. <b>Server computes both the private key and confirm code</b>
+	 * 
+	 * @throws IOException
+	 */
+	// TODO replace with actual implementation
+	private void connect() throws IOException {
+		boolean retry = true;
+		while (retry) {
+			// wait for requested client's username
+			String uname = new String(SSCStreamManager.readBytes(in));
+			if (uname.contentEquals(clientName))
+				SSCStreamManager.sendBytes(out, "nonsense".getBytes());
+			else if (serverClass.clientIsOnline(uname, true)) {
+				SSCStreamManager.sendBytes(out, "online".getBytes());
+				otherClientName = new String(uname);
+				otherClientService = serverClass.getServiceByName(otherClientName);
+				retry = false;
+			} else
+				SSCStreamManager.sendBytes(out, "unavailable".getBytes());
+		}
+
+		retry = true;
+		while (retry) {
+			// the requested client also requests this service's client
+			if(otherClientService.getOtherClientName().contentEquals(clientName)){
+				retry = false;
+				protocol = new SSCServerProtocol(this);
+			}
+		}
+
+		isInChat = true;
 	}
 
 	public SSCServer getServerClass() {
@@ -180,26 +220,6 @@ public class SSCSServiceStandard implements SSCServerService {
 	public void forwardMessageToService(SSCServerService service, byte[] em,
 			byte[] hm) {
 
-	}
-
-	/**
-	 * 
-	 * @return the generated Id for the new client.
-	 */
-	private int generateId() {
-		boolean retry = true;
-		int id = -1;
-		while (retry) {
-			retry = false;
-			id = 555555 + rand.nextInt(444444);
-			if (serverClass.getClientServices().size() == 0)
-				return id;
-			for (SSCServerService service : serverClass.getClientServices()) {
-				if (service.getServiceId() == id)
-					retry = true;
-			}
-		}
-		return id;
 	}
 
 	@Override
@@ -218,13 +238,28 @@ public class SSCSServiceStandard implements SSCServerService {
 	}
 
 	@Override
-	public SSCServerService getDestService() {
-		return destinationService;
+	public SSCServerService getOtherClientService() {
+		return otherClientService;
 	}
 
 	@Override
 	public void addMessageToBuffer(byte[] m) {
 		serverClass.getBuffer().add(m, serverBufferId);
+	}
+
+	@Override
+	public String getClientName() {
+		return clientName;
+	}
+
+	@Override
+	public String getOtherClientName() {
+		return otherClientName;
+	}
+
+	@Override
+	public boolean isInChat() {
+		return isInChat;
 	}
 
 }

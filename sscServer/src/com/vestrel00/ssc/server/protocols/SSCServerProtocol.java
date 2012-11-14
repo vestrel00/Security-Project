@@ -23,20 +23,7 @@ public class SSCServerProtocol implements SSCProtocol {
 	private boolean isWorking;
 
 	/**
-	 * Initialize the protocol but without initializing the crypto. Must
-	 * manually call initCrypto if this constructor is used!
-	 * 
-	 * @param service
-	 *            the service that launched this protocol.
-	 */
-	public SSCServerProtocol(SSCServerService service) {
-		this.service = service;
-		isWorking = true;
-	}
-
-	/**
-	 * Initialize the protocol including the crypto.
-	 * 
+	 * Initialize the protocol as well as the crypto.
 	 * @param service
 	 *            the service that launched this protocol.
 	 * @param serverBufferId
@@ -46,11 +33,24 @@ public class SSCServerProtocol implements SSCProtocol {
 	 * @param keyCodeOK
 	 *            the keyCode agreed upon by the destination client and this
 	 *            service's client.
+	 * 
+	 * @param service
+	 *            the service that launched this protocol.
 	 */
-	public SSCServerProtocol(SSCServerService service, String secretKey,
-			String keyCodeOK) {
-		this(service);
-		initCrypto(secretKey, keyCodeOK);
+	public SSCServerProtocol(SSCServerService service) {
+		this.service = service;
+		isWorking = true;
+		initCrypto(genKey(), genConfirmCode());
+	}
+
+	private String genKey() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String genConfirmCode() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/**
@@ -109,7 +109,7 @@ public class SSCServerProtocol implements SSCProtocol {
 			}
 			// Everything checked out
 			service.addMessageToBuffer(m);
-			service.forwardMessageToService(service.getDestService(), hem, hm);
+			service.forwardMessageToService(service.getOtherClientService(), hem, hm);
 		} catch (IOException | NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}

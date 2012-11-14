@@ -24,7 +24,8 @@ public interface SSCServer {
 
 	/**
 	 * Starts the server. If the server is listening, it accepts all incoming
-	 * connection requests. Otherwise, the server is shutdown;
+	 * connection requests launching a dedicated service for it. Otherwise, the
+	 * server is shutdown.
 	 * 
 	 * @throws IOException
 	 */
@@ -37,7 +38,7 @@ public interface SSCServer {
 	 * 
 	 * @throws IOException
 	 */
-	public void stopListening();
+	public void finish();
 
 	/**
 	 * 
@@ -47,14 +48,32 @@ public interface SSCServer {
 
 	/**
 	 * 
-	 * @return the service with the given id.
+	 * @return the service with the given client name.
 	 */
-	public SSCServerService getServiceById(int destServiceId);
+	public SSCServerService getServiceByName(String clientName);
 
 	/**
 	 * 
 	 * @return the current list of services.
 	 */
 	public List<SSCServerService> getClientServices();
+
+	/**
+	 * 
+	 * @return true if client is online. If checkBusy is true, then return true
+	 *         if client is online AND not in chat with someone else.
+	 */
+	public boolean clientIsOnline(String clientName, boolean checkBusy);
+
+	/**
+	 * 
+	 * @return the session id of the service
+	 */
+	public int getSessionId();
+
+	/**
+	 * Remove the service with the given client name from the list.
+	 */
+	public void removeService(String clientName);
 
 }
