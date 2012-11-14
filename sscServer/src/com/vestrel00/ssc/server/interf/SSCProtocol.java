@@ -9,12 +9,7 @@ import com.vestrel00.ssc.server.interf.SSCCrypto;
  * 
  */
 public interface SSCProtocol {
-
-	/**
-	 * Initialize the crypto that will be used.
-	 */
-	public void initCrypto(String secretKey, String keyCodeOK);
-
+	
 	/**
 	 * Tells the protocol to keep handling requests by the client. If the client
 	 * quits, this returns false, flagging the service to stop.

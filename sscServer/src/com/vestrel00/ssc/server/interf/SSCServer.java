@@ -66,14 +66,10 @@ public interface SSCServer {
 	public boolean clientIsOnline(String clientName, boolean checkBusy);
 
 	/**
-	 * 
-	 * @return the session id of the service
+	 * Remove the service with the given client name from the list and
+	 * deallocates its buffer from the server.
 	 */
-	public int getSessionId();
+	public void removeService(String clientName, int clientBufferId);
 
-	/**
-	 * Remove the service with the given client name from the list.
-	 */
-	public void removeService(String clientName);
 
 }

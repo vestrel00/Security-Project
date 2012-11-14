@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
+import com.vestrel00.ssc.server.datatypes.SSCBufferClient;
 import com.vestrel00.ssc.server.interf.SSCServer;
 import com.vestrel00.ssc.server.interf.SSCServerService;
 import com.vestrel00.ssc.server.interf.SSCProtocol;
@@ -28,8 +29,8 @@ public class SSCSServiceStandard implements SSCServerService {
 	private DataInputStream in;
 	private DataOutputStream out;
 	private boolean inService, isInChat;
-	private int serviceId, serverBufferId;
 	private String clientName, otherClientName;
+	private SSCBufferClient clientBuffer;
 
 	/**
 	 * Create the service.
@@ -45,12 +46,11 @@ public class SSCSServiceStandard implements SSCServerService {
 	}
 
 	/**
-	 * Allocate buffer space in server, get session id, open IO connections, and
-	 * initialize other variables.
+	 * Allocate buffer space in server, open IO connections, and initialize
+	 * other variables.
 	 */
 	private void init() {
-		serviceId = serverClass.getSessionId();
-		serverBufferId = serverClass.getBuffer().allocate(10);
+		clientBuffer = serverClass.getBuffer().allocate(10);
 		inService = true;
 		openIO();
 	}
@@ -69,7 +69,7 @@ public class SSCSServiceStandard implements SSCServerService {
 	public boolean login() throws IOException {
 		int attempts = 0;
 		SSCStreamManager.sendBytes(out,
-				"Login or Create new account?".getBytes());
+				"Login or Create new account? (login | create)".getBytes());
 		String choice = new String(SSCStreamManager.readBytes(in));
 		if (choice.contentEquals("login")) {
 			while (attempts < 3) {
@@ -146,7 +146,7 @@ public class SSCSServiceStandard implements SSCServerService {
 	public void stopService() {
 		inService = false;
 		closeIO();
-		serverClass.removeService(clientName);
+		serverClass.removeService(clientName, clientBuffer.getBufferId());
 		// not necessary since this is running on the same thread but..
 		if (protocol != null)
 			protocol.stopWorking();
@@ -194,7 +194,8 @@ public class SSCSServiceStandard implements SSCServerService {
 			else if (serverClass.clientIsOnline(uname, true)) {
 				SSCStreamManager.sendBytes(out, "online".getBytes());
 				otherClientName = new String(uname);
-				otherClientService = serverClass.getServiceByName(otherClientName);
+				otherClientService = serverClass
+						.getServiceByName(otherClientName);
 				retry = false;
 			} else
 				SSCStreamManager.sendBytes(out, "unavailable".getBytes());
@@ -203,12 +204,12 @@ public class SSCSServiceStandard implements SSCServerService {
 		retry = true;
 		while (retry) {
 			// the requested client also requests this service's client
-			if(otherClientService.getOtherClientName().contentEquals(clientName)){
+			if (otherClientService.getOtherClientName().contentEquals(
+					clientName)) {
 				retry = false;
-				protocol = new SSCServerProtocol(this);
+				// TODO init protocol and send same params used to client
 			}
 		}
-
 		isInChat = true;
 	}
 
@@ -219,7 +220,7 @@ public class SSCSServiceStandard implements SSCServerService {
 	@Override
 	public void forwardMessageToService(SSCServerService service, byte[] em,
 			byte[] hm) {
-
+		// TODO
 	}
 
 	@Override
@@ -233,18 +234,8 @@ public class SSCSServiceStandard implements SSCServerService {
 	}
 
 	@Override
-	public int getServiceId() {
-		return serviceId;
-	}
-
-	@Override
 	public SSCServerService getOtherClientService() {
 		return otherClientService;
-	}
-
-	@Override
-	public void addMessageToBuffer(byte[] m) {
-		serverClass.getBuffer().add(m, serverBufferId);
 	}
 
 	@Override
@@ -260,6 +251,11 @@ public class SSCSServiceStandard implements SSCServerService {
 	@Override
 	public boolean isInChat() {
 		return isInChat;
+	}
+
+	@Override
+	public SSCBufferClient getClientBuffer() {
+		return clientBuffer;
 	}
 
 }

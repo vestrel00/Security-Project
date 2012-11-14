@@ -1,0 +1,44 @@
+package com.vestrel00.ssc.server.datatypes;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Used for storing buffer related data pertaining to one client.
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public class SSCBufferClient {
+
+	private List<byte[]> buffer;
+	private int bufferId, bufferSize, maxBufferSize;
+
+	public SSCBufferClient(int bufferId, int bufferSize, int maxBufferSize) {
+		this.bufferId = bufferId;
+		this.bufferSize = bufferSize;
+		this.maxBufferSize = maxBufferSize;
+		buffer = new ArrayList<byte[]>();
+	}
+
+	/**
+	 * Sets the size of the buffer. The given size may not
+	 * exceed the maximum size set by the server. If it does, it will be set to
+	 * the maximum set by the server.
+	 */
+	public void setBufferSize(int bufferSize) {
+		if (bufferSize < maxBufferSize)
+			this.bufferSize = bufferSize;
+		else
+			clients.get(bufferId).setBufferSize(maxClientBufferSize);
+	}
+
+	public int getBufferId() {
+		return bufferId;
+	}
+
+	public int getBufferSize() {
+		return bufferSize;
+	}
+
+}

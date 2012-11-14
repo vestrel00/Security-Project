@@ -5,7 +5,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import com.vestrel00.ssc.server.interf.SSCServer;
 import com.vestrel00.ssc.server.interf.SSCServerService;
@@ -22,7 +21,6 @@ public class SSCServerStandard implements SSCServer {
 	private ServerSocket server;
 	private List<SSCServerService> clientServices;
 	private SSCServerBuffer buffer;
-	private Random rand;
 	private boolean isListening;
 
 	public SSCServerStandard(int port, int maxClientCount,
@@ -30,7 +28,6 @@ public class SSCServerStandard implements SSCServer {
 		server = new ServerSocket(port);
 		clientServices = new ArrayList<SSCServerService>();
 		buffer = new SSCServerBuffer(maxClientCount, maxClientBufferSize);
-		rand = new Random();
 		isListening = true;
 	}
 
@@ -90,24 +87,8 @@ public class SSCServerStandard implements SSCServer {
 		return false;
 	}
 
-	public int getSessionId() {
-		boolean retry = true;
-		int id = -1;
-		while (retry) {
-			retry = false;
-			id = 555555 + rand.nextInt(444444);
-			if (clientServices.size() == 0)
-				return id;
-			for (SSCServerService service : clientServices) {
-				if (service.getServiceId() == id)
-					retry = true;
-			}
-		}
-		return id;
-	}
-
 	@Override
-	public void removeService(String clientName) {
+	public void removeService(String clientName, int clientBufferId) {
 		int index = -1;
 		for (int i = 0; i < clientServices.size(); i++)
 			if (clientServices.get(i).getClientName().contentEquals(clientName)) {
@@ -116,6 +97,6 @@ public class SSCServerStandard implements SSCServer {
 			}
 		if (index != -1)
 			clientServices.remove(index);
+		buffer.removeClientById(clientBufferId);
 	}
-
 }

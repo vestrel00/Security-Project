@@ -1,5 +1,6 @@
 package com.vestrel00.ssc.server;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,104 +17,77 @@ import com.vestrel00.ssc.server.datatypes.SSCBufferClient;
  */
 public class SSCServerBuffer {
 
-	private static final CharSequence NL = "\n";
-
-	/**
-	 * Double array. Each list in the buffer is allocated to each client.
-	 */
-	private List<ArrayList<byte[]>> buffers;
 	private List<SSCBufferClient> clients;
 	private final int maxClientCount, maxClientBufferSize;
-
-	private StringBuilder builder;
+	private SecureRandom rand;
 
 	/**
-	 * Create the buffer.
+	 * Create the server buffer.
 	 * 
-	 * @param bufferSize
-	 *            The amount of memory this buffer can hold. Used for keeping
-	 *            track each message each client sends.
+	 * @param maxClientCount
+	 *            maximum amount of buffers that can be active at once.
+	 * @param maxClientBufferSize
+	 *            maximum buffer size of any client that requests for a buffer.
 	 */
 	public SSCServerBuffer(int maxClientCount, int maxClientBufferSize) {
 		this.maxClientCount = maxClientCount;
 		this.maxClientBufferSize = maxClientBufferSize;
 		clients = new ArrayList<SSCBufferClient>();
-		buffers = new ArrayList<ArrayList<byte[]>>();
-		builder = new StringBuilder();
+		rand = new SecureRandom();
 	}
 
 	/**
 	 * Allocates a new buffer in the list of buffers having the given size.
 	 * 
-	 * @return the bufferId. -1 if the list of buffers has reached its capacity
-	 *         and no new buffer is allocated
+	 * @return the buffer client object that has been added to the server buffer
+	 *         list. Null if server has reached maximum capacity.
 	 */
-	public int allocate(int bufferSize) {
-		if (buffers.size() < maxClientCount) {
-			buffers.add(new ArrayList<byte[]>());
-			clients.add(new SSCBufferClient(buffers.size() - 1, bufferSize));
-			return buffers.size() - 1;
+	public SSCBufferClient allocate(int bufferSize) {
+		SSCBufferClient bc;
+		if (clients.size() < maxClientCount) {
+			bc = new SSCBufferClient(genId(), bufferSize, maxClientBufferSize);
+			clients.add(bc);
+			return bc;
 		} else
-			return -1;
+			return null;
 	}
 
 	/**
-	 * Adds a message to the buffer with the given buffer id. Note that adding a
-	 * message when the buffer is full deletes the oldest message (queue/LIFO
-	 * logic).
-	 * 
-	 * @param bufferId
-	 *            the buffer to store the message in
-	 * @param message
-	 *            message to be saved in the buffer
+	 * Generates a random id that is unused by any of the buffers in the list.
+	 * This uses SecureRandom! Not java.util.Random. <b>Why bother with
+	 * this?</b> <br>
+	 * For obfuscation of the client and its buffer. So if an attacker somehow
+	 * gets access to the list of buffers, it tells nothing of who the buffer
+	 * belongs to unless he has the corresponding service that has a handle to
+	 * the same buffer object with the same id.
 	 */
-	public void add(byte[] message, int bufferId) {
-		if (buffers.get(bufferId).size() >= clients.get(bufferId)
-				.getBufferSize())
-			buffers.get(bufferId).remove(0);
-		buffers.get(bufferId).add(message);
-
-	}
-
-	/**
-	 * <b>Warning!</b><br>
-	 * Clears all the buffers for all the clients.
-	 */
-	public void clearAll() {
-		for (ArrayList<byte[]> l : buffers)
-			l.clear();
-	}
-
-	/**
-	 * Clears the buffer of the client buffer with the given id.
-	 */
-	public void clear(int bufferId) {
-		buffers.get(bufferId).clear();
-	}
-
-	/**
-	 * Sets the size of the buffer with the given id. The given size may not
-	 * exceed the maximum size set by the server. If it does, it will be set to
-	 * the maximum set by the server.
-	 * 
-	 */
-	public void setMaxSize(int bufferSize, int bufferId) {
-		if (bufferSize < maxClientBufferSize)
-			clients.get(bufferId).setBufferSize(bufferSize);
-		else
-			clients.get(bufferId).setBufferSize(maxClientBufferSize);
-	}
-
-	/**
-	 * Returns all the messages contained in the given bufferId as strings. Each
-	 * message is separated by a new line from oldest to current.
-	 */
-	public String toStringOf(int bufferId) {
-		builder.delete(0, builder.length());
-		for (byte[] b : buffers.get(bufferId)) {
-			builder.append(new String(b));
-			builder.append(NL);
+	private int genId() {
+		boolean retry = true;
+		int id = -1;
+		while (retry) {
+			retry = false;
+			id = 55555555 + rand.nextInt(44444444);
+			for (SSCBufferClient client : clients)
+				if (client.getBufferId() == id) {
+					retry = true;
+					continue;
+				}
 		}
-		return builder.toString();
+		return id;
 	}
+
+	/**
+	 * Remove the client's buffer with the given id from the list buffers in the
+	 * server.
+	 */
+	public void removeClientById(int clientBufferId) {
+		int index = 0;
+		for (int i = 0; i < clients.size(); i++)
+			if (clients.get(i).getBufferId() == clientBufferId) {
+				index = i;
+				break;
+			}
+		clients.remove(index);
+	}
+
 }

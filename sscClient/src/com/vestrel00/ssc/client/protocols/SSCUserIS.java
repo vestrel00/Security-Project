@@ -49,14 +49,22 @@ public class SSCUserIS implements Runnable {
 								.encrypt(userStr.getBytes()));
 
 				// wait for server E(OK)
-				String resultCode = new String(client
+				byte[] resultCode = client
 						.getClientProtocol()
 						.getCrypto()
 						.decrypt(
 								SSCStreamManager.readBytes(client
-										.getServerInputStream())));
+										.getServerInputStream()));
 
-				if (resultCode.contentEquals(client.getClientProtocol().getCrypto().getConfirmCode()))
+				boolean confirmed = true;
+				for (int i = 0; i < resultCode.length; i++)
+					if (resultCode[i] != client.getClientProtocol().getCrypto()
+							.getConfirmCode()[i]) {
+						confirmed = false;
+						break;
+					}
+
+				if (confirmed)
 					// send H(m)
 					SSCStreamManager.sendBytes(
 							client.getOutputStream(),

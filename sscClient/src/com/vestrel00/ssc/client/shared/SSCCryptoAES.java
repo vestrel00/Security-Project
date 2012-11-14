@@ -21,8 +21,7 @@ public class SSCCryptoAES implements SSCCrypto {
 
 	private Cipher cipher;
 	private SecretKeySpec spec;
-	private byte[] key;
-	private String confirmCode;
+	private byte[] key, confirmCode;
 
 	/**
 	 * Create the crypto instance. All parameters must be the same as the
@@ -37,7 +36,7 @@ public class SSCCryptoAES implements SSCCrypto {
 	 * 
 	 * @throws InvalidKeyLengthException
 	 */
-	public SSCCryptoAES(byte[] key, String confirmCode)
+	public SSCCryptoAES(byte[] key, byte[] confirmCode)
 			throws IllegalArgumentException {
 		if (key.length != 16)
 			throw new IllegalArgumentException("length of key must = 16");
@@ -79,7 +78,7 @@ public class SSCCryptoAES implements SSCCrypto {
 	}
 
 	@Override
-	public String getConfirmCode() {
+	public byte[] getConfirmCode() {
 		return confirmCode;
 	}
 

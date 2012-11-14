@@ -1,35 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
-		<item value="322" key="DIALOG_WIDTH"/>
-		<item value="185" key="DIALOG_Y_ORIGIN"/>
-		<item value="561" key="DIALOG_HEIGHT"/>
-		<item value="203" key="DIALOG_X_ORIGIN"/>
+		<item value="324" key="DIALOG_WIDTH"/>
+		<item value="112" key="DIALOG_Y_ORIGIN"/>
+		<item value="480" key="DIALOG_X_ORIGIN"/>
+		<item value="576" key="DIALOG_HEIGHT"/>
 		<item value="1|Cantarell|11.0|0|GTK|1|" key="DIALOG_FONT_NAME"/>
 	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
 		<item value="true" key="wrap"/>
-		<item value="false" key="isRegEx"/>
 		<item value="true" key="casesensitive"/>
+		<item value="false" key="isRegEx"/>
 		<item value="false" key="incremental"/>
 		<item value="false" key="wholeword"/>
-		<item value="initProtocol" key="selection"/>
+		<item value="isInChat" key="selection"/>
 		<list key="findhistory">
-			<item value="initProtocol"/>
-			<item value="remove"/>
-			<item value="d"/>
-			<item value="initProto"/>
+			<item value="isInChat"/>
+			<item value="inChat"/>
+			<item value="rand"/>
+			<item value="protocol"/>
+			<item value="forwardMessageToService"/>
 			<item value="serviceId"/>
-			<item value="sessionId"/>
-			<item value="isConnected"/>
-			<item value="Failed to"/>
+			<item value="getSessionId"/>
+			<item value="initProtocol"/>
 		</list>
 		<list key="replacehistory">
 			<item value="isInChat"/>
 		</list>
 	</section>
 	<section name="org.eclipse.ui.texteditor.GotoLineAction$GotoLineDialog_dialogBounds">
-		<item value="32" key="DIALOG_Y_ORIGIN"/>
+		<item value="27" key="DIALOG_Y_ORIGIN"/>
 		<item value="408" key="DIALOG_X_ORIGIN"/>
 	</section>
 </section>

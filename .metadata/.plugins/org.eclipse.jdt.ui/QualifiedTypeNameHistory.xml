@@ -16,7 +16,6 @@
 <fullyQualifiedTypeName name="javax.crypto.Cipher"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.SSCStreamManager"/>
 <fullyQualifiedTypeName name="java.io.EOFException"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.server.datatypes.SSCBufferClient"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.client.shared.SSCCryptoAES"/>
 <fullyQualifiedTypeName name="java.util.ArrayList"/>
 <fullyQualifiedTypeName name="java.io.BufferedReader"/>
@@ -33,7 +32,9 @@
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.SSCServerBuffer"/>
 <fullyQualifiedTypeName name="java.util.Random"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.interf.SSCServerService"/>
-<fullyQualifiedTypeName name="java.util.List"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.shared.SSCStreamManager"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.client.shared.SSCStreamManager"/>
+<fullyQualifiedTypeName name="java.util.List"/>
+<fullyQualifiedTypeName name="java.security.SecureRandom"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.server.datatypes.SSCBufferClient"/>
 </qualifiedTypeNameHistroy>

@@ -30,19 +30,10 @@ public class SSCClientProtocol implements SSCProtocol {
 	/**
 	 * Initialize the protocol including the crypto.
 	 */
-	public SSCClientProtocol(SSCClient client, String secretKey,
-			String keyCodeOK) {
+	public SSCClientProtocol(SSCClient client, byte[] secretKey,
+			byte[] confirmCode) {
 		this(client);
-		initCrypto(secretKey, keyCodeOK);
-	}
-
-	@Override
-	public void initCrypto(String secretKey, String keyCodeOK) {
-		try {
-			crypt = new SSCCryptoAES(secretKey.getBytes(), keyCodeOK);
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		}
+		crypt = new SSCCryptoAES(secretKey, confirmCode);
 	}
 
 	@Override
@@ -67,7 +58,7 @@ public class SSCClientProtocol implements SSCProtocol {
 					.getServerInputStream());
 			// tell server that it has been received
 			SSCStreamManager.sendBytes(client.getOutputStream(),
-					crypt.encrypt(crypt.getConfirmCode().getBytes()));
+					crypt.encrypt(crypt.getConfirmCode()));
 			// Wait for H(m)
 			byte[] hm = SSCStreamManager.readBytes(client
 					.getServerInputStream());

@@ -10,7 +10,6 @@ import java.net.UnknownHostException;
 import java.security.NoSuchAlgorithmException;
 
 import com.vestrel00.ssc.client.interf.SSCProtocol;
-import com.vestrel00.ssc.client.protocols.SSCClientProtocol;
 import com.vestrel00.ssc.client.protocols.SSCUserIS;
 import com.vestrel00.ssc.client.shared.SSCStreamManager;
 
@@ -138,9 +137,6 @@ public class SSCClient {
 		}
 		connect();
 
-		protocol = new SSCClientProtocol(this, "0123456789abcdef",
-				"kkjf9934ihssj");
-
 		// now connected with another user
 		// launch the user input thread
 		userIStream = new SSCUserIS(this);
@@ -172,7 +168,7 @@ public class SSCClient {
 			if (response.contentEquals("online")) {
 				System.out.println(clientName
 						+ " is online.\nWaiting for other user...");
-				// TODO
+				// TODO init protocol same params as serverservice!
 				isInChat = true;
 			} else if (response.contentEquals("nonsense"))
 				System.out.println("You are " + clientName
