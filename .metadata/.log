@@ -1607,3 +1607,12 @@ Caused by: org.eclipse.core.runtime.CoreException: End Of File
 	at org.eclipse.jdt.internal.core.dom.rewrite.TokenScanner.getTokenEndOffset(TokenScanner.java:187)
 	at org.eclipse.jdt.internal.core.dom.rewrite.ASTRewriteAnalyzer.visit(ASTRewriteAnalyzer.java:1840)
 	... 70 more
+!SESSION 2012-11-15 02:30:17.869 -----------------------------------------------
+eclipse.buildId=M20120914-1800
+java.version=1.7.0_09-icedtea
+java.vendor=Oracle Corporation
+BootLoader constants: OS=linux, ARCH=x86, WS=gtk, NL=en_US
+Command-line arguments:  -os linux -ws gtk -arch x86
+
+!ENTRY org.eclipse.ui 2 2 2012-11-15 02:31:16.295
+!MESSAGE Invalid property category path: ValidationPropertiesPage (bundle: org.eclipse.wst.xml.ui, propertyPage: org.eclipse.wst.xml.ui.propertyPage.project.validation)

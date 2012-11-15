@@ -1,7 +1,0 @@
-package com.vestrel00.ssc;
-
-import java.net.SocketAddress;
-
-public class SSCServerAddress extends SocketAddress {
-
-}
