@@ -5,6 +5,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import com.vestrel00.ssc.server.datatypes.SSCBufferClient;
+import com.vestrel00.ssc.server.protocols.SSCServerMessageReceiver;
+import com.vestrel00.ssc.server.protocols.SSCServerMessageSender;
 
 /**
  * The server's response to a client connection request. This service is
@@ -51,12 +53,6 @@ public interface SSCServerService extends Runnable {
 	public DataOutputStream getOutputStream();
 
 	/**
-	 * Forwards E(m) and H(m) to the given service's client.
-	 */
-	public void forwardMessageToService(SSCServerService service, byte[] em,
-			byte[] hm);
-
-	/**
 	 * 
 	 * @return the other client's service (the service that the messages will be
 	 *         sent to).
@@ -71,13 +67,6 @@ public interface SSCServerService extends Runnable {
 
 	/**
 	 * 
-	 * @return the other client name that this service's client wants to chat
-	 *         with.
-	 */
-	public String getOtherClientName();
-
-	/**
-	 * 
 	 * @return true if this service's client is already in chat with another
 	 */
 	public boolean isInChat();
@@ -87,5 +76,27 @@ public interface SSCServerService extends Runnable {
 	 * @return the client's buffer object.
 	 */
 	public SSCBufferClient getClientBuffer();
+
+	/**
+	 * Used by the service that computed the keys.
+	 */
+	public void setSecretKey(byte[] secretKey);
+
+	/**
+	 * Used by the service that computed the keys.
+	 */
+	public void setConfirmCode(byte[] confirmCode);
+
+	/**
+	 * 
+	 * @return the service's receiver.
+	 */
+	public SSCServerMessageReceiver getReceiver();
+
+	/**
+	 * 
+	 * @return the service's sender.
+	 */
+	public SSCServerMessageSender getSender();
 
 }

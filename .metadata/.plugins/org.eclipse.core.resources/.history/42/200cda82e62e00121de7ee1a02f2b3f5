@@ -1,0 +1,5 @@
+package com.vestrel00.ssc.server.protocols;
+
+public class SSCMessageReceiver implements SSCProtocol{
+
+}

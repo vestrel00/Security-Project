@@ -1,7 +1,5 @@
 package com.vestrel00.ssc.client.interf;
 
-import com.vestrel00.ssc.client.interf.SSCCrypto;
-
 /**
  * Protocol that the client and server programs run.
  * 
@@ -9,7 +7,7 @@ import com.vestrel00.ssc.client.interf.SSCCrypto;
  * 
  */
 public interface SSCProtocol {
-	
+
 	/**
 	 * Tells the protocol to keep handling requests by the client. If the client
 	 * quits, this returns false, flagging the service to stop.
@@ -26,10 +24,5 @@ public interface SSCProtocol {
 	 * Calling work() after this method is called will have no effect();
 	 */
 	public void stopWorking();
-	
-	/**
-	 * Return the crypto in use.
-	 */
-	public SSCCrypto getCrypto();
 
 }

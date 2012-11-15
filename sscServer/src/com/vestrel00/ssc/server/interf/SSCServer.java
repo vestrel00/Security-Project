@@ -60,10 +60,9 @@ public interface SSCServer {
 
 	/**
 	 * 
-	 * @return true if client is online. If checkBusy is true, then return true
-	 *         if client is online AND not in chat with someone else.
+	 * @return true if client is online.
 	 */
-	public boolean clientIsOnline(String clientName, boolean checkBusy);
+	public boolean clientIsOnline(String clientName);
 
 	/**
 	 * Remove the service with the given client name from the list and

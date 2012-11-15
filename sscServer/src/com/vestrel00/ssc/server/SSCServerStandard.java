@@ -76,14 +76,11 @@ public class SSCServerStandard implements SSCServer {
 	}
 
 	@Override
-	public boolean clientIsOnline(String clientName, boolean checkBusy) {
+	public boolean clientIsOnline(String clientName) {
 		for (SSCServerService serv : clientServices)
 			if (serv.getClientName() != null
 					&& serv.getClientName().contentEquals(clientName))
-				if (checkBusy)
-					return !serv.isInChat();
-				else
-					return true;
+				return true;
 		return false;
 	}
 

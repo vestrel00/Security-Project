@@ -9,8 +9,11 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.NoSuchAlgorithmException;
 
+import com.vestrel00.ssc.client.interf.SSCCrypto;
 import com.vestrel00.ssc.client.interf.SSCProtocol;
-import com.vestrel00.ssc.client.protocols.SSCUserIS;
+import com.vestrel00.ssc.client.protocols.SSCClientMessageSender;
+import com.vestrel00.ssc.client.protocols.SSCClientMessageReceiver;
+import com.vestrel00.ssc.client.shared.SSCCryptoAES;
 import com.vestrel00.ssc.client.shared.SSCStreamManager;
 
 /**
@@ -25,19 +28,24 @@ public class SSCClient {
 	 * User input stream is running on a separate thread;
 	 */
 	private BufferedReader userIn;
-	private DataInputStream in;
 	private DataOutputStream out;
+	private DataInputStream in;
 	private Socket socket;
 	private SSCClientBuffer buffer;
-	private SSCProtocol protocol;
-	private SSCUserIS userIStream;
+	private SSCProtocol receiver;
+	private SSCClientMessageSender sender;
+	private SSCCrypto crypt;
 	private boolean isRunning, isInChat;
+	private String host;
+	private int port;
 
 	/**
 	 * Constructor. Immediately invokes the login protocol.
 	 */
 	public SSCClient(String host, int port, int maxBufferSize)
 			throws UnknownHostException, IOException {
+		this.host = host;
+		this.port = port;
 		socket = new Socket(host, port);
 		buffer = new SSCClientBuffer(maxBufferSize);
 		isRunning = true;
@@ -77,7 +85,8 @@ public class SSCClient {
 	public void closeIO() throws IOException {
 		out.close();
 		in.close();
-		userIn.close();
+		if (userIn != null)
+			userIn.close();
 		out = null;
 		in = null;
 		userIn = null;
@@ -94,34 +103,41 @@ public class SSCClient {
 		int attempts = 0;
 		System.out.println(new String(SSCStreamManager.readBytes(in)));
 
-		String choice = userIn.readLine();
-		SSCStreamManager.sendBytes(out, choice.getBytes());
-
-		if (choice.contentEquals("login")) {
-			while (attempts < 3) {
-				System.out.println(new String(SSCStreamManager.readBytes(in)));
-				SSCStreamManager.sendBytes(out, userIn.readLine().getBytes());
-				System.out.println(new String(SSCStreamManager.readBytes(in)));
-				SSCStreamManager.sendBytes(out, userIn.readLine().getBytes());
-				if (new String(SSCStreamManager.readBytes(in))
-						.contentEquals("good"))
-					return true;
-				else {
-					System.out
-							.println("Unable to login.\n"
-									+ "User may already be online or name and/or password is incorrect.");
-					attempts++;
+		// now featuring an infinite loop!
+		while (true) {
+			String choice = userIn.readLine();
+			if (choice.contentEquals("login")) {
+				while (attempts < 3) {
+					SSCStreamManager.sendBytes(out, choice.getBytes());
+					System.out.println(new String(SSCStreamManager
+							.readBytes(in)));
+					SSCStreamManager.sendBytes(out, userIn.readLine()
+							.getBytes());
+					System.out.println(new String(SSCStreamManager
+							.readBytes(in)));
+					SSCStreamManager.sendBytes(out, userIn.readLine()
+							.getBytes());
+					if (new String(SSCStreamManager.readBytes(in))
+							.contentEquals("good"))
+						return true;
+					else {
+						System.out
+								.println("Unable to login.\n"
+										+ "User may already be online or name and/or password is incorrect.");
+						attempts++;
+					}
 				}
-			}
-			return false;
-		} else if (choice.contentEquals("create"))
-			return createAccount();
-		else
-			return false;
+				return false;
+			} else if (choice.contentEquals("create"))
+				return createAccount();
+			else if (choice != null)
+				System.out.println("Unknown command : " + choice);
+		}
 	}
 
-	private boolean createAccount() {
+	private boolean createAccount() throws IOException {
 		// TODO Auto-generated method stub
+		SSCStreamManager.sendBytes(out, "create".getBytes());
 		return true;
 	}
 
@@ -136,17 +152,29 @@ public class SSCClient {
 			System.exit(1);
 		}
 		connect();
-
-		// now connected with another user
-		// launch the user input thread
-		userIStream = new SSCUserIS(this);
-		new Thread(userIStream).start();
-		// this thread will remain listening for input from the other user
+		// the userInputStream will no longer be used in this thread
+		userIn.close();
+		// this thread will remain listening for incoming service inputs
 		while (isRunning) {
-			if (!protocol.work())
+			if (!receiver.work())
 				isRunning = false;
 		}
 		finish();
+	}
+
+	/**
+	 * Launch the sender thread that handles user input and sends those input to
+	 * the service's receiver which is being launched at the same time as this.
+	 * This opens up a new socket with the service's initReceiver() in order to
+	 * get a separate in and out streams from this receiver.
+	 * 
+	 * @throws UnknownHostException
+	 * @throws IOException
+	 */
+	private void initSender() throws UnknownHostException, IOException {
+		// TODO PORT PORT
+		sender = new SSCClientMessageSender(this, new Socket(host, port), crypt);
+		new Thread(sender).start();
 	}
 
 	/**
@@ -156,7 +184,7 @@ public class SSCClient {
 	 * 
 	 * @throws IOException
 	 */
-	// TODO replace with actual implementation
+	// TODO wrap with RSA
 	private void connect() throws IOException {
 		System.out.println("Login successful");
 		while (!isInChat) {
@@ -168,7 +196,9 @@ public class SSCClient {
 			if (response.contentEquals("online")) {
 				System.out.println(clientName
 						+ " is online.\nWaiting for other user...");
-				// TODO init protocol same params as serverservice!
+				// both clients are go, initialize the receiver and sender
+				initReceiver();
+				initSender();
 				isInChat = true;
 			} else if (response.contentEquals("nonsense"))
 				System.out.println("You are " + clientName
@@ -176,9 +206,25 @@ public class SSCClient {
 			else
 				System.out
 						.println(clientName
-								+ " is offline, chatting with someone else or does not exist.");
-
+								+ " is offline or chatting with someone else or does not exist.");
 		}
+	}
+
+	/**
+	 * Initialize the protocol which also initializes the crypto.
+	 * 
+	 * @throws IOException
+	 */
+	// TODO wrap with RSA
+	private void initReceiver() throws IOException {
+		// wait for secretKey
+		byte[] secretKey = SSCStreamManager.readBytes(in);
+		// send OK to server
+		SSCStreamManager.sendBytes(out, "ok".getBytes());
+		// wait for confirmCode
+		byte[] confirmCode = SSCStreamManager.readBytes(in);
+		crypt = new SSCCryptoAES(secretKey, confirmCode);
+		receiver = new SSCClientMessageReceiver(this, crypt);
 	}
 
 	/**
@@ -191,7 +237,7 @@ public class SSCClient {
 		closeIO();
 		socket.close();
 		// not really necessary since this has no effect
-		protocol.stopWorking();
+		receiver.stopWorking();
 	}
 
 	public BufferedReader getUserInputStream() {
@@ -210,8 +256,8 @@ public class SSCClient {
 		return in;
 	}
 
-	public SSCProtocol getClientProtocol() {
-		return protocol;
+	public SSCProtocol getReceiver() {
+		return receiver;
 	}
 
 }
