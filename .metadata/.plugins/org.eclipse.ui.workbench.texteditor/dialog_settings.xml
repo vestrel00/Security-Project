@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
-		<item value="326" key="DIALOG_WIDTH"/>
-		<item value="78" key="DIALOG_Y_ORIGIN"/>
-		<item value="661" key="DIALOG_HEIGHT"/>
-		<item value="118" key="DIALOG_X_ORIGIN"/>
+		<item value="330" key="DIALOG_WIDTH"/>
+		<item value="27" key="DIALOG_Y_ORIGIN"/>
+		<item value="539" key="DIALOG_X_ORIGIN"/>
+		<item value="705" key="DIALOG_HEIGHT"/>
 		<item value="1|Cantarell|11.0|0|GTK|1|" key="DIALOG_FONT_NAME"/>
 	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
 		<item value="true" key="wrap"/>
-		<item value="false" key="isRegEx"/>
 		<item value="true" key="casesensitive"/>
+		<item value="false" key="isRegEx"/>
 		<item value="false" key="incremental"/>
 		<item value="true" key="wholeword"/>
-		<item value="login" key="selection"/>
+		<item value="initReceiver" key="selection"/>
 		<list key="findhistory">
-			<item value="login"/>
+			<item value="initReceiver"/>
 			<item value="isInChat"/>
 			<item value="initSender"/>
-			<item value="forwardMessageToService"/>
-			<item value="nonsense"/>
-			<item value="run"/>
-			<item value="new Socket"/>
-			<item value="userIn"/>
+			<item value="connect"/>
+			<item value="isRunning"/>
+			<item value="finish"/>
+			<item value="print"/>
+			<item value="165"/>
 		</list>
 		<list key="replacehistory">
 			<item value="messageSender"/>

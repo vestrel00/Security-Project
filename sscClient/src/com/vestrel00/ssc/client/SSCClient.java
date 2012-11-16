@@ -111,10 +111,12 @@ public class SSCClient {
 					SSCStreamManager.sendBytes(out, choice.getBytes());
 					System.out.println(new String(SSCStreamManager
 							.readBytes(in)));
+					// send username
 					SSCStreamManager.sendBytes(out, userIn.readLine()
 							.getBytes());
 					System.out.println(new String(SSCStreamManager
 							.readBytes(in)));
+					// send password
 					SSCStreamManager.sendBytes(out, userIn.readLine()
 							.getBytes());
 					if (new String(SSCStreamManager.readBytes(in))
@@ -151,22 +153,23 @@ public class SSCClient {
 			System.out.println("Failed to login. Exiting system...");
 			System.exit(1);
 		}
-		connect();
-		// the userInputStream will no longer be used in this thread
-		userIn.close();
+		try {
+			connect();
+		} catch (IOException brokenPipe) {
+			System.out.println("You have been logged out");
+			finish();
+		}
 		// this thread will remain listening for incoming service inputs
 		while (isRunning) {
 			if (!receiver.work())
-				isRunning = false;
+				finish();
 		}
-		finish();
 	}
 
 	/**
 	 * Launch the sender thread that handles user input and sends those input to
 	 * the service's receiver which is being launched at the same time as this.
-	 * This opens up a new socket with the service's initReceiver() in order to
-	 * get a separate in and out streams from this receiver.
+	 * This opens up new input and output streams.
 	 * 
 	 * @throws UnknownHostException
 	 * @throws IOException
@@ -194,8 +197,9 @@ public class SSCClient {
 			SSCStreamManager.sendBytes(out, clientName.getBytes());
 			String response = new String(SSCStreamManager.readBytes(in));
 			if (response.contentEquals("online")) {
-				System.out.println(clientName
-						+ " is online.\nWaiting for other user...");
+				System.out
+						.println(clientName
+								+ " is online.\nWaiting for other user...");
 				// both clients are go, initialize the receiver and sender
 				initReceiver();
 				initSender();
@@ -236,8 +240,7 @@ public class SSCClient {
 	public void finish() throws IOException {
 		closeIO();
 		socket.close();
-		// not really necessary since this has no effect
-		receiver.stopWorking();
+		isRunning = false;
 	}
 
 	public BufferedReader getUserInputStream() {
@@ -258,6 +261,10 @@ public class SSCClient {
 
 	public SSCProtocol getReceiver() {
 		return receiver;
+	}
+
+	public boolean isRunning() {
+		return isRunning;
 	}
 
 }

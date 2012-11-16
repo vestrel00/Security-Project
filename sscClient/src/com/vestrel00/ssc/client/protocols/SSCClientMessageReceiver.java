@@ -7,7 +7,6 @@ import java.security.NoSuchAlgorithmException;
 import com.vestrel00.ssc.client.SSCClient;
 import com.vestrel00.ssc.client.interf.SSCCrypto;
 import com.vestrel00.ssc.client.interf.SSCProtocol;
-import com.vestrel00.ssc.client.shared.SSCCryptoAES;
 import com.vestrel00.ssc.client.shared.SSCStreamManager;
 
 /**
@@ -21,17 +20,15 @@ public class SSCClientMessageReceiver implements SSCProtocol {
 
 	private SSCClient client;
 	private SSCCrypto crypt;
-	private boolean isWorking;
 
 	public SSCClientMessageReceiver(SSCClient client, SSCCrypto crypt) {
 		this.client = client;
 		this.crypt = crypt;
-		isWorking = true;
 	}
 
 	@Override
 	public boolean work() {
-		if (isWorking) {
+		if (client.isRunning()) {
 			performMagic();
 			return true;
 		}
@@ -71,11 +68,6 @@ public class SSCClientMessageReceiver implements SSCProtocol {
 		} catch (IOException | NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
-	}
-
-	@Override
-	public void stopWorking() {
-		isWorking = false;
 	}
 
 }

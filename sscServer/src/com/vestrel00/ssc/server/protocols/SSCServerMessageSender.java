@@ -89,11 +89,6 @@ public class SSCServerMessageSender implements SSCProtocol {
 		}
 	}
 
-	@Override
-	public void stopWorking() {
-		isWorking = false;
-	}
-
 	public void addToPending(byte[] m) {
 		pending.add(m);
 	}

@@ -59,10 +59,18 @@ public class SSCBufferClient {
 		return bufferSize;
 	}
 
+	public int getCurrentSize() {
+		return buffer.size();
+	}
+
 	public void addMessage(byte[] m) {
 		if (buffer.size() >= bufferSize)
 			buffer.remove(0);
 		buffer.add(m);
+	}
+
+	public void clear() {
+		buffer.clear();
 	}
 
 }

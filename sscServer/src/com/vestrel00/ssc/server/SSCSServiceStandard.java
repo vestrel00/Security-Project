@@ -94,11 +94,11 @@ public class SSCSServiceStandard implements SSCServerService {
 					if (serverClass.clientIsOnline(uname)) {
 						attempts++;
 						SSCStreamManager.sendBytes(out, "bad".getBytes());
-						continue;
+					} else {
+						clientName = uname;
+						SSCStreamManager.sendBytes(out, "good".getBytes());
+						return true;
 					}
-					clientName = uname;
-					SSCStreamManager.sendBytes(out, "good".getBytes());
-					return true;
 				} else {
 					SSCStreamManager.sendBytes(out, "bad".getBytes());
 					attempts++;
@@ -158,18 +158,17 @@ public class SSCSServiceStandard implements SSCServerService {
 
 	@Override
 	public void stopService() {
-		inService = false;
-		closeIO();
-		serverClass.removeService(clientName, clientBuffer.getBufferId());
-		// not necessary since this is running on the same thread but..
-		if (sender != null)
-			sender.stopWorking();
-		try {
-			if (client != null)
-				client.close();
-			client = null;
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (inService) {
+			inService = false;
+			closeIO();
+			serverClass.removeService(clientName, clientBuffer.getBufferId());
+			try {
+				if (client != null)
+					client.close();
+				client = null;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -180,26 +179,27 @@ public class SSCSServiceStandard implements SSCServerService {
 			login();
 			connect();
 		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
 			stopService();
 		}
 
 		// isOutputShutdown checks if client is still connected
 		while (inService && client.isOutputShutdown()) {
 			if (sender != null && !sender.work())
-				inService = false;
+				stopService();
 		}
-		stopService();
 	}
 
 	/**
+	 * <p>
 	 * Launch the receiver thread that will listen for incoming client messages.
 	 * This opens up a new socket with the client's initSender() in order to get
 	 * a separate in and out streams from this sender.
+	 * </p>
+	 * 
 	 */
 	private void initReceiver() {
-		// TODO PORT PORT
+		receiver = new SSCServerMessageReceiver(this, client, crypt);
+		// serverClass.get
 	}
 
 	/**

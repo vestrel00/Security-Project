@@ -20,9 +20,4 @@ public interface SSCProtocol {
 	 */
 	public void performMagic();
 
-	/**
-	 * Calling work() after this method is called will have no effect();
-	 */
-	public void stopWorking();
-
 }

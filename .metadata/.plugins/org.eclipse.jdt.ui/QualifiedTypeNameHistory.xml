@@ -28,9 +28,7 @@
 <fullyQualifiedTypeName name="com.vestrel00.ssc.client.protocols.SSCClientProtocol"/>
 <fullyQualifiedTypeName name="java.security.SecureRandom"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.client.protocols.SSCClientMessageSender"/>
-<fullyQualifiedTypeName name="java.io.BufferedReader"/>
 <fullyQualifiedTypeName name="java.io.DataOutputStream"/>
-<fullyQualifiedTypeName name="java.io.InputStreamReader"/>
 <fullyQualifiedTypeName name="java.io.DataInputStream"/>
 <fullyQualifiedTypeName name="java.util.List"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.datatypes.SSCPendingMessage"/>
@@ -42,4 +40,7 @@
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.protocols.SSCServerMessageReceiver"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.client.interf.SSCCrypto"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.protocols.SSCServerMessageSender"/>
+<fullyQualifiedTypeName name="java.net.SocketException"/>
+<fullyQualifiedTypeName name="java.io.BufferedReader"/>
+<fullyQualifiedTypeName name="java.io.InputStreamReader"/>
 </qualifiedTypeNameHistroy>
