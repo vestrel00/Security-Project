@@ -1,6 +1,8 @@
 package com.vestrel00.ssc.server;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
@@ -8,8 +10,12 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.vestrel00.ssc.server.datatypes.SSCPendingClient;
+import com.vestrel00.ssc.server.datatypes.SSCServerClient;
 import com.vestrel00.ssc.server.interf.SSCServer;
 import com.vestrel00.ssc.server.interf.SSCServerService;
+import com.vestrel00.ssc.server.shared.SSCSettings;
+import com.vestrel00.ssc.server.shared.SSCStreamManager;
 
 /**
  * An implementation of an SSCServer.
@@ -20,7 +26,9 @@ import com.vestrel00.ssc.server.interf.SSCServerService;
  */
 public class SSCServerStandard implements SSCServer {
 
+	private SSCSettings settings;
 	private ServerSocket server;
+	private List<SSCPendingClient> pending;
 	private List<SSCServerService> clientServices;
 	private SSCServerBuffer buffer;
 	private boolean isListening;
@@ -29,8 +37,10 @@ public class SSCServerStandard implements SSCServer {
 	public SSCServerStandard(int port, int maxClientCount,
 			int maxClientBufferSize) throws IOException {
 		server = new ServerSocket(port);
+		pending = new ArrayList<SSCPendingClient>();
 		clientServices = new ArrayList<SSCServerService>();
 		buffer = new SSCServerBuffer(maxClientCount, maxClientBufferSize);
+		settings = new SSCSettings();
 		isListening = true;
 	}
 
@@ -39,10 +49,7 @@ public class SSCServerStandard implements SSCServer {
 		while (isListening) {
 			try {
 				if (clientServices.size() >= maxClientCount) {
-					Socket newClient = server.accept();
-					clientServices
-							.add(new SSCSServiceStandard(this, newClient));
-					new Thread(clientServices.get(clientServices.size() - 1))
+					new Thread(new ConnectionReception(this, server.accept()))
 							.start();
 				}
 			} catch (IOException e) {
@@ -73,7 +80,7 @@ public class SSCServerStandard implements SSCServer {
 	@Override
 	public SSCServerService getServiceByName(String clientName) {
 		for (SSCServerService service : clientServices) {
-			if (service.getClientName().contentEquals(clientName))
+			if (service.getClient().getName().contentEquals(clientName))
 				return service;
 		}
 		return null;
@@ -87,8 +94,8 @@ public class SSCServerStandard implements SSCServer {
 	@Override
 	public boolean clientIsOnline(String clientName) {
 		for (SSCServerService serv : clientServices)
-			if (serv.getClientName() != null
-					&& serv.getClientName().contentEquals(clientName))
+			if (serv.getClient().getName() != null
+					&& serv.getClient().getName().contentEquals(clientName))
 				return true;
 		return false;
 	}
@@ -97,7 +104,8 @@ public class SSCServerStandard implements SSCServer {
 	public void removeService(String clientName, int clientBufferId) {
 		int index = -1;
 		for (int i = 0; i < clientServices.size(); i++)
-			if (clientServices.get(i).getClientName().contentEquals(clientName)) {
+			if (clientServices.get(i).getClient().getName()
+					.contentEquals(clientName)) {
 				index = i;
 				break;
 			}
@@ -105,6 +113,98 @@ public class SSCServerStandard implements SSCServer {
 			clientServices.remove(index);
 		buffer.removeClientById(clientBufferId);
 		System.out.println("User " + clientName + " has logged out.");
+	}
+
+	@Override
+	public List<SSCPendingClient> getPendingClients() {
+		return pending;
+	}
+
+	@Override
+	public SSCPendingClient retrievePendingClient(String name) {
+		boolean retry = true;
+		SSCPendingClient pc = null;
+		int index = 0;
+		while (retry) {
+			for (index = 0; index < pending.size(); index++)
+				if (pending.get(index).getName().contentEquals(name)) {
+					pc = pending.get(index);
+					retry = false;
+					break;
+				}
+		}
+		pending.remove(index);
+		return pc;
+	}
+
+	@Override
+	public SSCSettings getSettings() {
+		return settings;
+	}
+
+	/**
+	 * Decides what to do with the accepted socket connection. For each accepted
+	 * client, checks if the client is already connected. If so, it places the
+	 * client in the pending client list which is checked by initReceiver()
+	 * during the connection() protocol.
+	 * 
+	 * @author Estrellado, Vandolf
+	 * @see SSCServerService#initReceiver()
+	 * 
+	 */
+	private class ConnectionReception implements Runnable {
+
+		private Socket client;
+		private SSCServer serverClass;
+
+		private ConnectionReception(SSCServer serverClass, Socket client) {
+			this.serverClass = serverClass;
+			this.client = client;
+		}
+
+		/**
+		 * Asks for the client's user name. If the client has not logged in, it
+		 * is in the init() protocol and the username it will send is null and a
+		 * new service and client data type will be created. If the client is
+		 * logged in, then it is in the initSender() protocol and its service is
+		 * in the initReceiver() protocol and this new socket is placed in the
+		 * pending list as an SSCPendingClient.
+		 * 
+		 * @see com.vestrel00.ssc.server.datatypes.SSCPendingClient
+		 */
+		@Override
+		public void run() {
+			DataInputStream in = null;
+			DataOutputStream out = null;
+			byte[] uname = null;
+			try {
+				in = new DataInputStream(client.getInputStream());
+				out = new DataOutputStream(client.getOutputStream());
+				uname = SSCStreamManager.readBytes(in);
+				SSCStreamManager.sendBytes(out, "OK".getBytes());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			if (new String(uname).contentEquals("null")) {
+				try {
+					int bufferSize;
+					bufferSize = Integer.parseInt(new String(SSCStreamManager
+							.readBytes(in)));
+					clientServices.add(new SSCSServiceStandard(serverClass,
+							new SSCServerClient(buffer.allocate(bufferSize),
+									client, null)));
+					new Thread(clientServices.get(clientServices.size() - 1))
+							.start();
+				} catch (NumberFormatException | IOException e) {
+					e.printStackTrace();
+				}
+			} else
+				pending.add(new SSCPendingClient(new String(uname), client));
+
+			// NOTE: Do not close the socket's in/out streams
+			// the service will do that itself - not the server.
+		}
 	}
 
 	/**
@@ -121,7 +221,7 @@ public class SSCServerStandard implements SSCServer {
 					System.in));
 			StringBuilder builder = new StringBuilder();
 			int commandIndex, itemIndex, flagIndex, paramIndex;
-			String command, item, flag, param;
+			String command, item, flag, param = null;
 
 			System.out.println("Server started");
 			help();
@@ -174,6 +274,9 @@ public class SSCServerStandard implements SSCServer {
 					} else { // command item flag <param>
 						itemIndex = commandIndex + 1;
 						item = builder.substring(itemIndex, flagIndex - 2);
+						paramIndex = builder.lastIndexOf(" ") + 1;
+						if (paramIndex != -1)
+							param = builder.substring(paramIndex);
 						if (command.contentEquals("clear")) {
 							if (item.contentEquals("buffer")) {
 								if (clientServices.size() == 0)
@@ -181,15 +284,13 @@ public class SSCServerStandard implements SSCServer {
 											.println("There are no buffers to clear.");
 								else if (flag.contentEquals("a")) {
 									for (SSCServerService serv : clientServices)
-										serv.getClientBuffer().clear();
+										serv.getClient().getBuffer().clear();
 									System.out
 											.println("All buffers have been cleared.");
 								} else if (flag.contentEquals("n")) {
-									paramIndex = builder.lastIndexOf(" ") + 1;
-									param = builder.substring(paramIndex);
 									try {
-										getServiceByName(param)
-												.getClientBuffer().clear();
+										getServiceByName(param).getClient()
+												.getBuffer().clear();
 										System.out
 												.println("User "
 														+ param
@@ -199,6 +300,21 @@ public class SSCServerStandard implements SSCServer {
 												+ "is not online.");
 									}
 								}
+							}
+						} else if (command.contentEquals("modify")) {
+							if (item.contentEquals("settings")) {
+								if (flag.contentEquals("d")) {
+									if (param.contentEquals("receiver"))
+										settings.debugReceiverProtocol = true;
+									else if (param.contentEquals("sender"))
+										settings.debugSenderProtocol = true;
+								} else if (flag.contentEquals("h")) {
+									if (param.contentEquals("receiver"))
+										settings.debugReceiverProtocol = false;
+									else if (param.contentEquals("sender"))
+										settings.debugSenderProtocol = false;
+								}
+
 							}
 						}
 					}
@@ -220,8 +336,8 @@ public class SSCServerStandard implements SSCServer {
 		private void printClientBuffer(String name) {
 			try {
 				SSCServerService serv = getServiceByName(name);
-				if (serv.getClientBuffer().getCurrentSize() != 0)
-					serv.getClientBuffer().toString();
+				if (serv.getClient().getBuffer().getCurrentSize() != 0)
+					System.out.print(serv.getClient().getBuffer().toString());
 				else
 					System.out.println("User " + name
 							+ " has not sent any messages");
@@ -240,9 +356,9 @@ public class SSCServerStandard implements SSCServer {
 			String users = "";
 			int count = 0;
 			for (SSCServerService serv : clientServices) {
-				if (serv.getClientName() != null) {
+				if (serv.getClient().getName() != null) {
 					count++;
-					users += serv.getClientName() + ", ";
+					users += serv.getClient().getName() + ", ";
 				}
 			}
 			System.out.println("There are currently " + count
@@ -251,7 +367,7 @@ public class SSCServerStandard implements SSCServer {
 		}
 
 		private void help() {
-			System.out.println("The following commands are available:");
+			System.out.println("Enter command <item> <flag> <parameter>:");
 			System.out
 					.println("clear buffer -a : clears the buffer of all services");
 			System.out
@@ -262,6 +378,14 @@ public class SSCServerStandard implements SSCServer {
 			System.out
 					.println("kick <clientName> : kicks the <clientName> from the server.");
 			System.out.println("list : lists all the active services");
+			System.out
+					.println("modify settings -d sender : enables sender protocol dedbug mode");
+			System.out
+					.println("modify settings -d receiver : enables receiver protocol dedbug mode");
+			System.out
+					.println("modify settings -h sender : disables sender protocol dedbug mode");
+			System.out
+					.println("modify settings -h receiver : disables receiver protocol dedbug mode");
 			System.out
 					.println("print -m <clientName> : prints the messages in the buffer <clientName>");
 			System.out.println("shutdown : shuts down the server");

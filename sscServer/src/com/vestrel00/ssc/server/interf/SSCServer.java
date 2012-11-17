@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.List;
 
 import com.vestrel00.ssc.server.SSCServerBuffer;
+import com.vestrel00.ssc.server.datatypes.SSCPendingClient;
+import com.vestrel00.ssc.server.shared.SSCSettings;
 
 /**
  * <p>
@@ -26,8 +28,7 @@ public interface SSCServer {
 	 * Starts the server. If the server is listening, it accepts all incoming
 	 * connection requests launching a dedicated service for it. Otherwise, the
 	 * server is shutdown. Only a maximum of maxClientCount may be connected at
-	 * once. Connection requests while server is full is ignored.
-	 * <br>
+	 * once. Connection requests while server is full is ignored. <br>
 	 * TODO make a queue
 	 * 
 	 * @throws IOException
@@ -72,5 +73,25 @@ public interface SSCServer {
 	 * deallocates its buffer from the server.
 	 */
 	public void removeService(String clientName, int clientBufferId);
+
+	/**
+	 * 
+	 * @return the pending client connection requests.
+	 */
+	public List<SSCPendingClient> getPendingClients();
+
+	/**
+	 * Note this method "blocks" until the client is found on the pending list.
+	 * This removes the client from the pending list.
+	 * 
+	 * @return the pending client with the given name
+	 */
+	public SSCPendingClient retrievePendingClient(String name);
+
+	/**
+	 * 
+	 * @return the settings being used
+	 */
+	public SSCSettings getSettings();
 
 }

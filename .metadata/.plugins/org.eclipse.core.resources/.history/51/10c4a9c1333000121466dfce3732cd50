@@ -1,0 +1,10 @@
+package com.vestrel00.ssc.server.datatypes;
+
+/**
+ * A simple data type that pairs the accepted sockets with client names.
+ * @author vestrel00
+ *
+ */
+public class SSCPendingClient {
+
+}

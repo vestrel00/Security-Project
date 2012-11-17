@@ -64,13 +64,18 @@ public class SSCClientMessageSender implements Runnable {
 	 */
 	@Override
 	public void run() {
+		String mStr;
 		try {
-			while ((userStr = userIn.readLine()) != null) {
-				client.getBuffer().add(userStr);
+			while ((userStr = userIn.readLine()) != null && client.isRunning()) {
+				mStr = client.getUserName() + " : " + userStr;
+				client.getBuffer().add(mStr);
+				// System.out.println(client.getUserName()
+				// + "Sender: sending E(m)");
 				// send E(m)
-				SSCStreamManager.sendBytes(out,
-						crypt.encrypt(userStr.getBytes()));
+				SSCStreamManager.sendBytes(out, crypt.encrypt(mStr.getBytes()));
 
+				// System.out.println(client.getUserName()
+				// + "Sender: waiting for E(confirmCode)");
 				// wait for server E(OK)
 				byte[] resultCode = crypt.decrypt(SSCStreamManager
 						.readBytes(in));
@@ -82,27 +87,30 @@ public class SSCClientMessageSender implements Runnable {
 						break;
 					}
 
-				if (confirmed)
+				if (confirmed) {
+					// System.out.println(client.getUserName()
+					// + "Sender: sending H(m)");
 					// send H(m)
 					SSCStreamManager.sendBytes(
 							out,
 							MessageDigest.getInstance("SHA-1").digest(
-									userStr.getBytes()));
-				else
-					continue;// something went wrong - do nothing
+									mStr.getBytes()));
+				} else {
+					System.out
+							.println("Warning! Connection may be compromised.");
+				}
 			}
 		} catch (IOException | NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
-
-		// clean up
-		try {
-			userIn.close();
-			out.close();
-			in.close();
-			socket.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+		} finally {
+			// clean up
+			try {
+				userIn.close();
+				out.close();
+				in.close();
+				socket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }

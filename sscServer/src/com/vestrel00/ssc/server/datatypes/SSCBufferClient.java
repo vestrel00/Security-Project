@@ -19,8 +19,8 @@ public class SSCBufferClient {
 
 	public SSCBufferClient(int bufferId, int bufferSize, int maxBufferSize) {
 		this.bufferId = bufferId;
-		this.bufferSize = bufferSize;
 		this.maxBufferSize = maxBufferSize;
+		setBufferSize(bufferSize);
 		buffer = new ArrayList<byte[]>();
 		builder = new StringBuilder();
 	}

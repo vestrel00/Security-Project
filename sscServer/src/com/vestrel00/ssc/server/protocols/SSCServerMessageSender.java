@@ -57,15 +57,24 @@ public class SSCServerMessageSender implements SSCProtocol {
 	 */
 	@Override
 	public void performMagic() {
+		boolean debug;
 		try {
 			if (pending.size() > 0) {
-				// send E(m)
-				SSCStreamManager.sendBytes(service.getOutputStream(),
-						crypt.encrypt(pending.get(0)));
+				debug = service.getServerClass().getSettings().debugSenderProtocol;
 
-				// wait for client E(OK)
+				if (debug)
+					System.out.println(service.getClient().getName()
+							+ " Sender: forwarding E(m)");
+				// send E(m)
+				SSCStreamManager.sendBytes(service.getClient()
+						.getOutputStream(), crypt.encrypt(pending.get(0)));
+
+				if (debug)
+					System.out.println(service.getClient().getName()
+							+ "Sender: waiting for client E(confirmCode)");
+				// wait for client E(confirmCode)
 				byte[] resultCode = crypt.decrypt(SSCStreamManager
-						.readBytes(service.getInputStream()));
+						.readBytes(service.getClient().getInputStream()));
 
 				boolean confirmed = true;
 				for (int i = 0; i < resultCode.length; i++)
@@ -74,13 +83,16 @@ public class SSCServerMessageSender implements SSCProtocol {
 						break;
 					}
 
-				if (confirmed)
+				if (confirmed) {
+					if (debug)
+						System.out.println(service.getClient().getName()
+								+ "Sender: sending H(m)");
 					// send H(m)
 					SSCStreamManager.sendBytes(
-							service.getOutputStream(),
+							service.getClient().getOutputStream(),
 							MessageDigest.getInstance("SHA-1").digest(
 									pending.get(0)));
-				else
+				} else
 					return;// something went wrong - do not send the message
 				pending.remove(0);
 			}

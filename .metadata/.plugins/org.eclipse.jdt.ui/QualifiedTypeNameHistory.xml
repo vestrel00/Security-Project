@@ -22,20 +22,15 @@
 <fullyQualifiedTypeName name="java.security.MessageDigest"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.SSCServerBuffer"/>
 <fullyQualifiedTypeName name="java.util.Random"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.server.shared.SSCStreamManager"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.client.shared.SSCStreamManager"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.server.datatypes.SSCBufferClient"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.client.protocols.SSCClientProtocol"/>
 <fullyQualifiedTypeName name="java.security.SecureRandom"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.client.protocols.SSCClientMessageSender"/>
-<fullyQualifiedTypeName name="java.io.DataOutputStream"/>
-<fullyQualifiedTypeName name="java.io.DataInputStream"/>
 <fullyQualifiedTypeName name="java.util.List"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.datatypes.SSCPendingMessage"/>
 <fullyQualifiedTypeName name="java.util.ArrayList"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.interf.SSCProtocol"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.interf.SSCServerService"/>
-<fullyQualifiedTypeName name="java.net.Socket"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.interf.SSCCrypto"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.protocols.SSCServerMessageReceiver"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.client.interf.SSCCrypto"/>
@@ -43,4 +38,12 @@
 <fullyQualifiedTypeName name="java.net.SocketException"/>
 <fullyQualifiedTypeName name="java.io.BufferedReader"/>
 <fullyQualifiedTypeName name="java.io.InputStreamReader"/>
+<fullyQualifiedTypeName name="java.io.DataInputStream"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.server.shared.SSCStreamManager"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.server.datatypes.SSCServerClient"/>
+<fullyQualifiedTypeName name="java.net.Socket"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.server.datatypes.SSCBufferClient"/>
+<fullyQualifiedTypeName name="java.io.DataOutputStream"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.server.datatypes.SSCPendingClient"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.server.shared.SSCSettings"/>
 </qualifiedTypeNameHistroy>

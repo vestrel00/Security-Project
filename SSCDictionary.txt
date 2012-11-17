@@ -6,3 +6,4 @@ decrypted
 crypto
 len
 admin
+init

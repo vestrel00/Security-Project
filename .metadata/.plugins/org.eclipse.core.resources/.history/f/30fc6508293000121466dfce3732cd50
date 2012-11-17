@@ -1,0 +1,29 @@
+package com.vestrel00.ssc.server.datatypes;
+
+import java.net.Socket;
+
+/**
+ * A simple data type that pairs each Socket with a name.
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public class SSCPendingClient {
+
+	private Socket socket;
+	private byte[] name;
+
+	public SSCPendingClient(Socket socket, byte[] name) {
+		this.socket = socket;
+		this.name = name;
+	}
+	
+	public Socket getSocket(){
+		return socket;
+	}
+	
+	public byte[] getName(){
+		return name;
+	}
+	
+}

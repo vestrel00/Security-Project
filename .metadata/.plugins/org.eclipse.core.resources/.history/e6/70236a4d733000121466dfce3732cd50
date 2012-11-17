@@ -1,0 +1,10 @@
+package com.vestrel00.ssc.client.shared;
+
+/**
+ * 
+ * @author Estrellado, Vandolf
+ *
+ */
+public class SSCSettings {
+
+}

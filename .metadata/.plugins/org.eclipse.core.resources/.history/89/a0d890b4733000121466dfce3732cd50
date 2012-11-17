@@ -1,0 +1,16 @@
+package com.vestrel00.ssc.client.shared;
+
+/**
+ * Simple settings mainly used for debugging.
+ * @author Estrellado, Vandolf
+ *
+ */
+public class SSCSettings {
+	
+	public boolean showProtocolsAtWork;
+	
+	public SSCSettings(boolean showProtocolsAtWork){
+		this.showProtocolsAtWork = showProtocolsAtWork;
+	}
+
+}

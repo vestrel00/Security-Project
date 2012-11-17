@@ -1,10 +1,6 @@
 package com.vestrel00.ssc.server.interf;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-
-import com.vestrel00.ssc.server.datatypes.SSCBufferClient;
+import com.vestrel00.ssc.server.datatypes.SSCServerClient;
 import com.vestrel00.ssc.server.protocols.SSCServerMessageReceiver;
 import com.vestrel00.ssc.server.protocols.SSCServerMessageSender;
 
@@ -19,7 +15,7 @@ import com.vestrel00.ssc.server.protocols.SSCServerMessageSender;
 public interface SSCServerService extends Runnable {
 
 	/**
-	 * Close all the streaming connections including the client socket. Also
+	 * Close all the streaming connections including the client socket and buffer. Also
 	 * removes the service from the server.
 	 * 
 	 * @throws IOException
@@ -42,40 +38,16 @@ public interface SSCServerService extends Runnable {
 
 	/**
 	 * 
-	 * @return the input stream
-	 */
-	public DataInputStream getInputStream();
-
-	/**
-	 * 
-	 * @return the output stream.
-	 */
-	public DataOutputStream getOutputStream();
-
-	/**
-	 * 
-	 * @return the other client's service (the service that the messages will be
+	 * @return the partners service (the service that the messages will be
 	 *         sent to).
 	 */
-	public SSCServerService getOtherClientService();
-
-	/**
-	 * 
-	 * @return the name of the client that is logged in.
-	 */
-	public String getClientName();
+	public SSCServerService getClientPartnerService();
 
 	/**
 	 * 
 	 * @return true if this service's client is already in chat with another
 	 */
 	public boolean isInChat();
-
-	/**
-	 * 
-	 * @return the client's buffer object.
-	 */
-	public SSCBufferClient getClientBuffer();
 
 	/**
 	 * Used by the service that computed the keys.
@@ -98,5 +70,11 @@ public interface SSCServerService extends Runnable {
 	 * @return the service's sender.
 	 */
 	public SSCServerMessageSender getSender();
+
+	/**
+	 * 
+	 * @return return the client
+	 */
+	public SSCServerClient getClient();
 
 }

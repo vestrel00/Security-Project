@@ -36,11 +36,11 @@ public class SSCClient {
 	private SSCClientMessageSender sender;
 	private SSCCrypto crypt;
 	private boolean isRunning, isInChat;
-	private String host;
+	private String host, username, partnerName;
 	private int port;
 
 	/**
-	 * Constructor. Immediately invokes the login protocol.
+	 * Constructor.
 	 */
 	public SSCClient(String host, int port, int maxBufferSize)
 			throws UnknownHostException, IOException {
@@ -51,6 +51,28 @@ public class SSCClient {
 		isRunning = true;
 		isInChat = false;
 		initIOTools();
+		init(maxBufferSize);
+	}
+
+	/**
+	 * <p>
+	 * Sends the requested buffer size to the server. This is performed with
+	 * server's ConnectionReception.
+	 * </p>
+	 * <ol>
+	 * <li>Send server null flagging the server that this is the initial
+	 * connection</li>
+	 * <li>Wait for server OK.</li>
+	 * <li>Send the bufferSize</li>
+	 * </ol>
+	 * 
+	 * @throws IOException
+	 */
+	private void init(int maxBufferSize) throws IOException {
+		SSCStreamManager.sendBytes(out, "null".getBytes());
+		SSCStreamManager.readBytes(in);
+		SSCStreamManager.sendBytes(out, String.valueOf(maxBufferSize)
+				.getBytes());
 	}
 
 	/**
@@ -67,14 +89,9 @@ public class SSCClient {
 	 * @throws IOException
 	 */
 	public void initIOTools() throws IOException {
-		if (out == null) {
-			out = new DataOutputStream(socket.getOutputStream());
-			in = new DataInputStream(socket.getInputStream());
-			userIn = new BufferedReader(new InputStreamReader(System.in));
-		} else {
-			closeIO();
-			initIOTools();
-		}
+		out = new DataOutputStream(socket.getOutputStream());
+		in = new DataInputStream(socket.getInputStream());
+		userIn = new BufferedReader(new InputStreamReader(System.in));
 	}
 
 	/**
@@ -111,18 +128,29 @@ public class SSCClient {
 					SSCStreamManager.sendBytes(out, choice.getBytes());
 					System.out.println(new String(SSCStreamManager
 							.readBytes(in)));
-					// send username
-					SSCStreamManager.sendBytes(out, userIn.readLine()
-							.getBytes());
-					System.out.println(new String(SSCStreamManager
-							.readBytes(in)));
-					// send password
-					SSCStreamManager.sendBytes(out, userIn.readLine()
-							.getBytes());
+
+					boolean retry = true;
+					try {
+						while (retry) {
+							// send username
+							username = userIn.readLine();
+							SSCStreamManager
+									.sendBytes(out, username.getBytes());
+							System.out.println(new String(SSCStreamManager
+									.readBytes(in)));
+							// send password
+							SSCStreamManager.sendBytes(out, userIn.readLine()
+									.getBytes());
+							retry = false;
+						}
+					} catch (IndexOutOfBoundsException e) {
+						retry = true;
+					}
 					if (new String(SSCStreamManager.readBytes(in))
-							.contentEquals("good"))
+							.contentEquals("good")) {
+						System.out.println("Login successful");
 						return true;
-					else {
+					} else {
 						System.out
 								.println("Unable to login.\n"
 										+ "User may already be online or name and/or password is incorrect.");
@@ -154,9 +182,8 @@ public class SSCClient {
 			System.exit(1);
 		}
 		try {
-			connect();
+			option();
 		} catch (IOException brokenPipe) {
-			System.out.println("You have been logged out");
 			finish();
 		}
 		// this thread will remain listening for incoming service inputs
@@ -167,6 +194,50 @@ public class SSCClient {
 	}
 
 	/**
+	 * Choose whether to configure settings, check which friends are online,
+	 * check invites, send invites, or connect with a friend that is online.
+	 * This runs with the option protocol of the server service.
+	 */
+	// TODO wrap with RSA
+	private void option() throws IOException {
+		String choice;
+		boolean retry = true;
+		while (retry) {
+			System.out.println("What do you want to do?");
+			System.out
+					.println("(checkFriendsList | checkInvites | sendInvites | connect)");
+			choice = userIn.readLine();
+			SSCStreamManager.sendBytes(out, choice.getBytes());
+			if (choice.contentEquals("checkFriendsList"))
+				checkFriends();
+			else if (choice.contentEquals("checkInvites"))
+				checkInvites();
+			else if (choice.contentEquals("sendInvites"))
+				sendInvites();
+			else if (choice.contentEquals("connect")) {
+				connect();
+				retry = false;
+			} else
+				System.out.println("Unknown command " + choice);
+		}
+	}
+
+	private void checkFriends() {
+		// TODO Auto-generated method stub
+
+	}
+
+	private void checkInvites() {
+		// TODO Auto-generated method stub
+
+	}
+
+	private void sendInvites() {
+		// TODO Auto-generated method stub
+
+	}
+
+	/**
 	 * Launch the sender thread that handles user input and sends those input to
 	 * the service's receiver which is being launched at the same time as this.
 	 * This opens up new input and output streams.
@@ -174,9 +245,24 @@ public class SSCClient {
 	 * @throws UnknownHostException
 	 * @throws IOException
 	 */
+	// TODO wrap with RSA
 	private void initSender() throws UnknownHostException, IOException {
-		// TODO PORT PORT
-		sender = new SSCClientMessageSender(this, new Socket(host, port), crypt);
+		Socket sock = new Socket(host, port);
+		DataInputStream receptionIn = new DataInputStream(sock.getInputStream());
+		DataOutputStream receptionOut = new DataOutputStream(
+				sock.getOutputStream());
+
+		// Note: 2 different in/out streams at this point! Do not get confused.
+		// send username
+		SSCStreamManager.sendBytes(receptionOut, username.getBytes());
+		// wait for server reception OK
+		SSCStreamManager.readBytes(receptionIn);
+		// server should now have a new pending client in the pending list
+		// wait for the OK
+		SSCStreamManager.readBytes(receptionIn);
+
+		// finally init and launch the sender
+		sender = new SSCClientMessageSender(this, sock, crypt);
 		new Thread(sender).start();
 	}
 
@@ -189,27 +275,25 @@ public class SSCClient {
 	 */
 	// TODO wrap with RSA
 	private void connect() throws IOException {
-		System.out.println("Login successful");
 		while (!isInChat) {
 			System.out
 					.println("Enter username of client you wish to chat with");
-			String clientName = new String(userIn.readLine());
-			SSCStreamManager.sendBytes(out, clientName.getBytes());
+			partnerName = new String(userIn.readLine());
+			SSCStreamManager.sendBytes(out, partnerName.getBytes());
 			String response = new String(SSCStreamManager.readBytes(in));
 			if (response.contentEquals("online")) {
-				System.out
-						.println(clientName
-								+ " is online.\nWaiting for other user...");
+				System.out.println(partnerName + " is online.\nWaiting for "
+						+ partnerName + "...");
 				// both clients are go, initialize the receiver and sender
 				initReceiver();
 				initSender();
 				isInChat = true;
 			} else if (response.contentEquals("nonsense"))
-				System.out.println("You are " + clientName
+				System.out.println("You are " + partnerName
 						+ ". You may not chat with yourself.");
 			else
 				System.out
-						.println(clientName
+						.println(partnerName
 								+ " is offline or chatting with someone else or does not exist.");
 		}
 	}
@@ -241,6 +325,7 @@ public class SSCClient {
 		closeIO();
 		socket.close();
 		isRunning = false;
+		System.out.println("You have been logged out");
 	}
 
 	public BufferedReader getUserInputStream() {
@@ -265,6 +350,14 @@ public class SSCClient {
 
 	public boolean isRunning() {
 		return isRunning;
+	}
+
+	public String getUserName() {
+		return username;
+	}
+
+	public String getPartnerName() {
+		return partnerName;
 	}
 
 }
