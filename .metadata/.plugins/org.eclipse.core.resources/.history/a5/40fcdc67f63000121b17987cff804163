@@ -16,8 +16,7 @@ public interface SSCServerService extends Runnable {
 
 	/**
 	 * Close all the streaming connections including the client socket and
-	 * buffer. Also removes the service from the server. This alerts and logs
-	 * out the other client if they were in chat.
+	 * buffer. Also removes the service from the server.
 	 * 
 	 * @param remove
 	 *            true if you want this service to remove itself from the
@@ -49,10 +48,9 @@ public interface SSCServerService extends Runnable {
 
 	/**
 	 * 
-	 * @return true if this service's client is in the connect() protocol with
-	 *         another client.
+	 * @return true if this service's client is already in chat with another
 	 */
-	public boolean isConnected();
+	public boolean isInChat();
 
 	/**
 	 * Used by the service that computed the keys.
@@ -81,11 +79,5 @@ public interface SSCServerService extends Runnable {
 	 * @return return the client
 	 */
 	public SSCServerClient getClient();
-
-	/**
-	 * 
-	 * @return true if client is in chat with another client.
-	 */
-	public boolean isInChat();
 
 }

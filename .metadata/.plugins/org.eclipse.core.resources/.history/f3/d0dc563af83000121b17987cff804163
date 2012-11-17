@@ -16,8 +16,8 @@ public interface SSCServerService extends Runnable {
 
 	/**
 	 * Close all the streaming connections including the client socket and
-	 * buffer. Also removes the service from the server. This alerts and logs
-	 * out the other client if they were in chat.
+	 * buffer. Also removes the service from the server. This alerts the other
+	 * client if they were in chat.
 	 * 
 	 * @param remove
 	 *            true if you want this service to remove itself from the

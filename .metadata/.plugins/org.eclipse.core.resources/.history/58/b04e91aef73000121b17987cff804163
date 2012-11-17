@@ -28,7 +28,7 @@ public class SSCSServiceStandard implements SSCServerService {
 	private SSCCrypto crypt;
 	private SSCServer serverClass;
 	private SSCServerService clientPartnerService;
-	private boolean inService, isInChat;
+	private boolean inService, isConnected, isInChat;
 	private SecureRandom rand;
 	private SSCServerClient client;
 
@@ -89,6 +89,7 @@ public class SSCSServiceStandard implements SSCServerService {
 						client.setName(uname);
 						SSCStreamManager.sendBytes(client.getOutputStream(),
 								"good".getBytes());
+						System.out.println("User " + uname + " has logged in.");
 						return true;
 					}
 				} else {
@@ -111,16 +112,17 @@ public class SSCSServiceStandard implements SSCServerService {
 	}
 
 	@Override
-	public void stopService() {
+	public void stopService(boolean remove) {
 		if (inService) {
 			inService = false;
 			client.closeIO();
-			serverClass.removeService(client.getName(), client.getBuffer()
-					.getBufferId());
+			if (receiver != null)
+				receiver.closeIO();
+			if (remove)
+				serverClass.removeService(client.getName(), client.getBuffer()
+						.getBufferId());
 			try {
-				if (client != null)
-					client.getSocket().close();
-				client = null;
+				client.getSocket().close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -131,16 +133,57 @@ public class SSCSServiceStandard implements SSCServerService {
 	public void run() {
 		try {
 			login();
-			connect();
+			option();
 		} catch (IOException e) {
-			stopService();
+			stopService(true);
 		}
 
 		// isOutputShutdown checks if client is still able to write to us
 		while (inService && !client.getSocket().isOutputShutdown()) {
 			if (sender != null && !sender.work())
-				stopService();
+				stopService(true);
 		}
+	}
+
+	/**
+	 * Wait for the client to make a choice about what to do next.
+	 * 
+	 * @throws IOException
+	 */
+	// TODO wrap with RSA
+	private void option() throws IOException {
+		String choice;
+		boolean retry = true;
+		while (retry) {
+			choice = new String(SSCStreamManager.readBytes(client
+					.getInputStream()));
+
+			if (choice.contentEquals("checkFriendsList"))
+				checkFriends();
+			else if (choice.contentEquals("checkInvites"))
+				checkInvites();
+			else if (choice.contentEquals("sendInvites"))
+				sendInvites();
+			else if (choice.contentEquals("connect")) {
+				connect();
+				retry = false;
+			}
+		}
+	}
+
+	private void checkFriends() {
+		// TODO Auto-generated method stub
+
+	}
+
+	private void checkInvites() {
+		// TODO Auto-generated method stub
+
+	}
+
+	private void sendInvites() {
+		// TODO Auto-generated method stub
+
 	}
 
 	/**
@@ -162,7 +205,7 @@ public class SSCSServiceStandard implements SSCServerService {
 				.getName());
 		// client and server now has new socket pairs to use! send OK.
 		SSCStreamManager.sendBytes(pc.getOutputStream(), "OK".getBytes());
-		
+
 		// finally init and launch the receiver
 		receiver = new SSCServerMessageReceiver(this, pc.getSocket(), crypt);
 		new Thread(receiver).start();
@@ -188,9 +231,14 @@ public class SSCSServiceStandard implements SSCServerService {
 			else if (serverClass.clientIsOnline(client.getPartnerName())) {
 				clientPartnerService = serverClass.getServiceByName(client
 						.getPartnerName());
-				SSCStreamManager.sendBytes(client.getOutputStream(),
-						"online".getBytes());
-				retry = false;
+				if (!clientPartnerService.isInChat()) {
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							"online".getBytes());
+					retry = false;
+				} else {
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							"unavailable".getBytes());
+				}
 			} else
 				SSCStreamManager.sendBytes(client.getOutputStream(),
 						"unavailable".getBytes());
@@ -211,8 +259,8 @@ public class SSCSServiceStandard implements SSCServerService {
 	 */
 	// TODO wrap with RSA
 	private void initSender() throws IOException {
-		isInChat = true;
-		if (!clientPartnerService.isInChat()) {
+		isConnected = true;
+		if (!clientPartnerService.isConnected()) {
 			// this service got here first - compute keys!
 			// generate secretKey
 			secretKey = new byte[16];
@@ -252,8 +300,8 @@ public class SSCSServiceStandard implements SSCServerService {
 	}
 
 	@Override
-	public boolean isInChat() {
-		return isInChat;
+	public boolean isConnected() {
+		return isConnected;
 	}
 
 	@Override
@@ -275,5 +323,8 @@ public class SSCSServiceStandard implements SSCServerService {
 	public SSCServerMessageSender getSender() {
 		return sender;
 	}
+
+	@Override
+	public boolean isInChat() {return isInChat;}
 
 }

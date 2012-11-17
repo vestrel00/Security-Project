@@ -28,7 +28,7 @@ public class SSCSServiceStandard implements SSCServerService {
 	private SSCCrypto crypt;
 	private SSCServer serverClass;
 	private SSCServerService clientPartnerService;
-	private boolean inService, isInChat;
+	private boolean inService, isConnected, isInChat;
 	private SecureRandom rand;
 	private SSCServerClient client;
 
@@ -114,9 +114,16 @@ public class SSCSServiceStandard implements SSCServerService {
 	@Override
 	public void stopService(boolean remove) {
 		if (inService) {
+			if (isInChat) {
+				clientPartnerService.getSender().addToPending(
+						new String(client.getName() + " has logged out.")
+								.getBytes());
+				clientPartnerService.stopService(true);
+			}
 			inService = false;
 			client.closeIO();
-			receiver.closeIO();
+			if (receiver != null)
+				receiver.closeIO();
 			if (remove)
 				serverClass.removeService(client.getName(), client.getBuffer()
 						.getBufferId());
@@ -230,9 +237,14 @@ public class SSCSServiceStandard implements SSCServerService {
 			else if (serverClass.clientIsOnline(client.getPartnerName())) {
 				clientPartnerService = serverClass.getServiceByName(client
 						.getPartnerName());
-				SSCStreamManager.sendBytes(client.getOutputStream(),
-						"online".getBytes());
-				retry = false;
+				if (!clientPartnerService.isInChat()) {
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							"online".getBytes());
+					retry = false;
+				} else {
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							"unavailable".getBytes());
+				}
 			} else
 				SSCStreamManager.sendBytes(client.getOutputStream(),
 						"unavailable".getBytes());
@@ -253,8 +265,8 @@ public class SSCSServiceStandard implements SSCServerService {
 	 */
 	// TODO wrap with RSA
 	private void initSender() throws IOException {
-		isInChat = true;
-		if (!clientPartnerService.isInChat()) {
+		isConnected = true;
+		if (!clientPartnerService.isConnected()) {
 			// this service got here first - compute keys!
 			// generate secretKey
 			secretKey = new byte[16];
@@ -294,8 +306,8 @@ public class SSCSServiceStandard implements SSCServerService {
 	}
 
 	@Override
-	public boolean isInChat() {
-		return isInChat;
+	public boolean isConnected() {
+		return isConnected;
 	}
 
 	@Override
@@ -316,6 +328,11 @@ public class SSCSServiceStandard implements SSCServerService {
 	@Override
 	public SSCServerMessageSender getSender() {
 		return sender;
+	}
+
+	@Override
+	public boolean isInChat() {
+		return isInChat;
 	}
 
 }
