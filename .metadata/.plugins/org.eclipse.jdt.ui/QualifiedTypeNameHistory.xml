@@ -8,7 +8,6 @@
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.SSCServer"/>
 <fullyQualifiedTypeName name="java.io.IOException"/>
 <fullyQualifiedTypeName name="java.net.ConnectException"/>
-<fullyQualifiedTypeName name="java.io.PrintWriter"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.interf.SSCServer"/>
 <fullyQualifiedTypeName name="javax.crypto.spec.SecretKeySpec"/>
 <fullyQualifiedTypeName name="javax.crypto.Cipher"/>
@@ -46,4 +45,6 @@
 <fullyQualifiedTypeName name="java.io.DataOutputStream"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.datatypes.SSCPendingClient"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.shared.SSCSettings"/>
+<fullyQualifiedTypeName name="java.util.Iterator"/>
+<fullyQualifiedTypeName name="java.io.PrintWriter"/>
 </qualifiedTypeNameHistroy>

@@ -41,7 +41,7 @@ public class SSCPendingClient {
 	}
 
 	/**
-	 * Closes the in and out streams.
+	 * Closes the in and out streams, including the socket.
 	 * 
 	 * @throws IOException
 	 */
@@ -49,6 +49,7 @@ public class SSCPendingClient {
 		try {
 			out.close();
 			in.close();
+			socket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -11,7 +11,6 @@ import com.vestrel00.ssc.server.interf.SSCServerService;
 import com.vestrel00.ssc.server.protocols.SSCServerMessageReceiver;
 import com.vestrel00.ssc.server.protocols.SSCServerMessageSender;
 import com.vestrel00.ssc.server.shared.SSCCryptoAES;
-import com.vestrel00.ssc.server.shared.SSCSettings;
 import com.vestrel00.ssc.server.shared.SSCStreamManager;
 
 /**
@@ -90,6 +89,7 @@ public class SSCSServiceStandard implements SSCServerService {
 						client.setName(uname);
 						SSCStreamManager.sendBytes(client.getOutputStream(),
 								"good".getBytes());
+						System.out.println("User " + uname + " has logged in.");
 						return true;
 					}
 				} else {
@@ -112,16 +112,16 @@ public class SSCSServiceStandard implements SSCServerService {
 	}
 
 	@Override
-	public void stopService() {
+	public void stopService(boolean remove) {
 		if (inService) {
 			inService = false;
 			client.closeIO();
-			serverClass.removeService(client.getName(), client.getBuffer()
-					.getBufferId());
+			receiver.closeIO();
+			if (remove)
+				serverClass.removeService(client.getName(), client.getBuffer()
+						.getBufferId());
 			try {
-				if (client != null)
-					client.getSocket().close();
-				client = null;
+				client.getSocket().close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -134,13 +134,13 @@ public class SSCSServiceStandard implements SSCServerService {
 			login();
 			option();
 		} catch (IOException e) {
-			stopService();
+			stopService(true);
 		}
 
 		// isOutputShutdown checks if client is still able to write to us
 		while (inService && !client.getSocket().isOutputShutdown()) {
 			if (sender != null && !sender.work())
-				stopService();
+				stopService(true);
 		}
 	}
 

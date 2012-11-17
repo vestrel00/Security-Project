@@ -53,7 +53,7 @@ public class SSCServerStandard implements SSCServer {
 							.start();
 				}
 			} catch (IOException e) {
-				System.out.println("Server successfully shutdown.");
+				finish();
 			}
 		}
 		finish();
@@ -67,9 +67,17 @@ public class SSCServerStandard implements SSCServer {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			for (int i = 0; i < clientServices.size(); i++) {
-				clientServices.get(i).stopService();
-			}
+
+			int size = clientServices.size();
+			for (int i = 0; i < size; i++)
+				clientServices.get(0).stopService(true);
+			
+			// double check
+			size = clientServices.size();
+			for (int i = 0; i < size; i++)
+				clientServices.get(0).stopService(true);
+
+			System.out.println("Server successfully shutdown.");
 		}
 	}
 
@@ -262,7 +270,7 @@ public class SSCServerStandard implements SSCServer {
 						param = builder.substring(paramIndex);
 						if (command.contentEquals("kick")) {
 							try {
-								getServiceByName(param).stopService();
+								getServiceByName(param).stopService(true);
 							} catch (NullPointerException e) {
 								System.out.println("User " + param
 										+ " is not online.");

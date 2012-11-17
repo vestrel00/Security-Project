@@ -15,12 +15,15 @@ import com.vestrel00.ssc.server.protocols.SSCServerMessageSender;
 public interface SSCServerService extends Runnable {
 
 	/**
-	 * Close all the streaming connections including the client socket and buffer. Also
-	 * removes the service from the server.
+	 * Close all the streaming connections including the client socket and
+	 * buffer. Also removes the service from the server.
 	 * 
+	 * @param remove
+	 *            true if you want this service to remove itself from the
+	 *            server's list
 	 * @throws IOException
 	 */
-	public void stopService();
+	public void stopService(boolean remove);
 
 	/**
 	 * Perform the login protocol with the client and then constantly check the
@@ -38,8 +41,8 @@ public interface SSCServerService extends Runnable {
 
 	/**
 	 * 
-	 * @return the partners service (the service that the messages will be
-	 *         sent to).
+	 * @return the partners service (the service that the messages will be sent
+	 *         to).
 	 */
 	public SSCServerService getClientPartnerService();
 

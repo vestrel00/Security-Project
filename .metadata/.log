@@ -2148,3 +2148,46 @@ java.io.IOException: Broken pipe
 	at org.eclipse.debug.internal.core.InputStreamMonitor.write(InputStreamMonitor.java:124)
 	at org.eclipse.debug.internal.core.InputStreamMonitor$1.run(InputStreamMonitor.java:99)
 	at java.lang.Thread.run(Thread.java:722)
+!SESSION 2012-11-17 13:31:37.522 -----------------------------------------------
+eclipse.buildId=M20120914-1800
+java.version=1.7.0_09-icedtea
+java.vendor=Oracle Corporation
+BootLoader constants: OS=linux, ARCH=x86, WS=gtk, NL=en_US
+Command-line arguments:  -os linux -ws gtk -arch x86
+
+!ENTRY org.eclipse.ui 2 2 2012-11-17 13:33:44.125
+!MESSAGE Invalid property category path: ValidationPropertiesPage (bundle: org.eclipse.wst.xml.ui, propertyPage: org.eclipse.wst.xml.ui.propertyPage.project.validation)
+
+!ENTRY org.eclipse.jface 2 0 2012-11-17 13:41:15.391
+!MESSAGE Keybinding conflicts occurred.  They may interfere with normal accelerator operation.
+!SUBENTRY 1 org.eclipse.jface 2 0 2012-11-17 13:41:15.391
+!MESSAGE A conflict occurred for CTRL+D:
+Binding(CTRL+D,
+	ParameterizedCommand(Command(org.eclipse.debug.ui.commands.eof,EOF,
+		Send end of file,
+		Category(org.eclipse.debug.ui.category.run,Run/Debug,Run/Debug command category,true),
+		org.eclipse.ui.internal.MakeHandlersGo@3a9eda,
+		,,true),null),
+	org.eclipse.ui.defaultAcceleratorConfiguration,
+	org.eclipse.debug.ui.console,,,system)
+Binding(CTRL+D,
+	ParameterizedCommand(Command(org.eclipse.ui.edit.text.delete.line,Delete Line,
+		Delete a line of text,
+		Category(org.eclipse.ui.category.textEditor,Text Editing,Text Editing Commands,true),
+		org.eclipse.ui.internal.MakeHandlersGo@932c97,
+		,,true),null),
+	org.eclipse.ui.defaultAcceleratorConfiguration,
+	org.eclipse.ui.textEditorScope,,,system)
+
+!ENTRY org.eclipse.debug.core 4 125 2012-11-17 14:00:09.252
+!MESSAGE Error logged from Debug Core: 
+!STACK 0
+java.io.IOException: Broken pipe
+	at java.io.FileOutputStream.writeBytes(Native Method)
+	at java.io.FileOutputStream.write(FileOutputStream.java:318)
+	at java.io.BufferedOutputStream.flushBuffer(BufferedOutputStream.java:82)
+	at java.io.BufferedOutputStream.flush(BufferedOutputStream.java:140)
+	at org.eclipse.debug.internal.core.InputStreamMonitor.writeNext(InputStreamMonitor.java:147)
+	at org.eclipse.debug.internal.core.InputStreamMonitor.write(InputStreamMonitor.java:124)
+	at org.eclipse.debug.internal.core.InputStreamMonitor$1.run(InputStreamMonitor.java:99)
+	at java.lang.Thread.run(Thread.java:722)

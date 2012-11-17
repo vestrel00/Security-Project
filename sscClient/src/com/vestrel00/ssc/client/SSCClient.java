@@ -5,6 +5,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.NoSuchAlgorithmException;
@@ -183,7 +184,7 @@ public class SSCClient {
 		}
 		try {
 			option();
-		} catch (IOException brokenPipe) {
+		} catch (IOException | IndexOutOfBoundsException e) {
 			finish();
 		}
 		// this thread will remain listening for incoming service inputs
@@ -324,6 +325,9 @@ public class SSCClient {
 	public void finish() throws IOException {
 		closeIO();
 		socket.close();
+		// can close sender's IO here but readLine is still blocking
+		// doesn't matter either way- small thing. 
+		// Note - tried writing to System.out
 		isRunning = false;
 		System.out.println("You have been logged out");
 	}

@@ -81,12 +81,19 @@ public class SSCServerMessageReceiver implements Runnable {
 				service.getClientPartnerService().getSender().addToPending(m);
 			}
 		} catch (IOException e) {
-			service.stopService();
+			service.stopService(true);
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
 
-		// clean up
+		closeIO();
+
+	}
+
+	/**
+	 * Close all i/o streams including the socket itself.
+	 */
+	public void closeIO() {
 		try {
 			out.close();
 			in.close();
