@@ -115,9 +115,16 @@ public class SSCSServiceStandard implements SSCServerService {
 	public void stopService(boolean remove) {
 		if (inService) {
 			if (isInChat) {
-				clientPartnerService.getSender().addToPending(
-						new String(client.getName() + " has logged out.")
-								.getBytes());
+				isInChat = false;
+				String lo = client.getName();
+				lo += " has logged out.";
+				clientPartnerService.getSender().addToPending(lo.getBytes());
+				// wait 1 second before stopping the other service for the above
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 				clientPartnerService.stopService(true);
 			}
 			inService = false;
@@ -193,31 +200,6 @@ public class SSCSServiceStandard implements SSCServerService {
 	}
 
 	/**
-	 * <p>
-	 * Launch the receiver thread that will listen for incoming client messages.
-	 * We then wait for the client to create another socket to get a new pair of
-	 * in/out streams. Proceed when the pending client is in the server pending
-	 * list.
-	 * </p>
-	 * 
-	 * @throws IOException
-	 * 
-	 */
-	// TODO wrap with RSA
-	private void initReceiver() throws IOException {
-		// retrieve the client from the pending list
-		// blocks until client is in pending list
-		SSCPendingClient pc = serverClass.retrievePendingClient(client
-				.getName());
-		// client and server now has new socket pairs to use! send OK.
-		SSCStreamManager.sendBytes(pc.getOutputStream(), "OK".getBytes());
-
-		// finally init and launch the receiver
-		receiver = new SSCServerMessageReceiver(this, pc.getSocket(), crypt);
-		new Thread(receiver).start();
-	}
-
-	/**
 	 * login succeeded now connect to another client that is also logged in the
 	 * server. Perform the client-client connection protocol with the server
 	 * service. <b>Server computes both the private key and confirm code</b>
@@ -284,11 +266,36 @@ public class SSCSServiceStandard implements SSCServerService {
 		}
 		// both services have the keys ready to send to their clients
 		SSCStreamManager.sendBytes(client.getOutputStream(), secretKey);
-		SSCStreamManager.readBytes(client.getInputStream()); // wait for client
-																// ok
+		// wait for client OK
+		SSCStreamManager.readBytes(client.getInputStream());
 		SSCStreamManager.sendBytes(client.getOutputStream(), confirmCode);
 		crypt = new SSCCryptoAES(secretKey, confirmCode);
 		sender = new SSCServerMessageSender(this, crypt);
+	}
+
+	/**
+	 * <p>
+	 * Launch the receiver thread that will listen for incoming client messages.
+	 * We then wait for the client to create another socket to get a new pair of
+	 * in/out streams. Proceed when the pending client is in the server pending
+	 * list.
+	 * </p>
+	 * 
+	 * @throws IOException
+	 * 
+	 */
+	// TODO wrap with RSA
+	private void initReceiver() throws IOException {
+		// retrieve the client from the pending list
+		// blocks until client is in pending list
+		SSCPendingClient pc = serverClass.retrievePendingClient(client
+				.getName());
+		// client and server now has new socket pairs to use! send OK.
+		SSCStreamManager.sendBytes(pc.getOutputStream(), "OK".getBytes());
+
+		// finally init and launch the receiver
+		receiver = new SSCServerMessageReceiver(this, pc.getSocket(), crypt);
+		new Thread(receiver).start();
 	}
 
 	public SSCServer getServerClass() {
@@ -333,6 +340,11 @@ public class SSCSServiceStandard implements SSCServerService {
 	@Override
 	public boolean isInChat() {
 		return isInChat;
+	}
+
+	@Override
+	public void setOnChat(boolean isInChat) {
+		this.isInChat = isInChat;
 	}
 
 }

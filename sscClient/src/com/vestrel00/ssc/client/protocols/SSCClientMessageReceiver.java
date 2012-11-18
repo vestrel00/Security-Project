@@ -43,18 +43,18 @@ public class SSCClientMessageReceiver implements SSCProtocol {
 	@Override
 	public void performMagic() {
 		try {
-			//System.out.println(client.getUserName()
-				//	+ "Receiver: waiting for E(m)");
+			// System.out.println(client.getUserName()
+			// + "Receiver: waiting for E(m)");
 			// Wait for E(m)
 			byte[] em = SSCStreamManager.readBytes(client
 					.getServerInputStream());
-			//System.out.println(client.getUserName()
-				//	+ "Receiver: sending E(confirmCode)");
-			// tell server that it has been received
+			// System.out.println(client.getUserName()
+			// + "Receiver: sending E(confirmCode)");
+			// send E(confirmCode)
 			SSCStreamManager.sendBytes(client.getOutputStream(),
 					crypt.encrypt(crypt.getConfirmCode()));
-			//System.out.println(client.getUserName()
-				//	+ "Receiver: waiting for H(m)");
+			// System.out.println(client.getUserName()
+			// + "Receiver: waiting for H(m)");
 			// Wait for H(m)
 			byte[] hm = SSCStreamManager.readBytes(client
 					.getServerInputStream());
@@ -65,16 +65,25 @@ public class SSCClientMessageReceiver implements SSCProtocol {
 			// authenticate
 			if (hem.length != hm.length)
 				return;
+
+			boolean confirmed = true;
 			for (int index = 0; index < hm.length; index++) {
-				if (hm[index] != hem[index]) // E(m) was tampered with
-					return;
+				if (hm[index] != hem[index]) { // E(m) or H(m) was tampered with
+					confirmed = false;
+					break;
+				}
 			}
-			//System.out.println(client.getUserName()
-				//	+ "Receiver: everything checked out");
-			// Everything checked out
-			String mStr = new String(m);
-			client.getBuffer().add(mStr);
-			System.out.println(mStr);
+
+			if (confirmed) {
+				// System.out.println(client.getUserName()
+				// + "Receiver: everything checked out");
+				// Everything checked out
+				String mStr = new String(m);
+				client.getBuffer().add(mStr);
+				System.out.println(mStr);
+			} else {
+				System.out.println("Warning! Connection may be compromised.");
+			}
 		} catch (IOException | NoSuchAlgorithmException e) {
 			try {
 				client.finish();

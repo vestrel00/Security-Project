@@ -1,30 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
-		<item value="334" key="DIALOG_WIDTH"/>
-		<item value="0" key="DIALOG_Y_ORIGIN"/>
-		<item value="741" key="DIALOG_HEIGHT"/>
-		<item value="827" key="DIALOG_X_ORIGIN"/>
+		<item value="336" key="DIALOG_WIDTH"/>
+		<item value="70" key="DIALOG_Y_ORIGIN"/>
+		<item value="91" key="DIALOG_X_ORIGIN"/>
+		<item value="472" key="DIALOG_HEIGHT"/>
 		<item value="1|Cantarell|11.0|0|GTK|1|" key="DIALOG_FONT_NAME"/>
 	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
 		<item value="true" key="wrap"/>
-		<item value="false" key="isRegEx"/>
 		<item value="true" key="casesensitive"/>
-		<item value="false" key="incremental"/>
+		<item value="false" key="isRegEx"/>
+		<item value="true" key="incremental"/>
 		<item value="true" key="wholeword"/>
 		<item value="stopService" key="selection"/>
 		<list key="findhistory">
 			<item value="stopService"/>
-			<item value="removeService"/>
-			<item value="connect()"/>
-			<item value="inConnected"/>
+			<item value="login"/>
 			<item value="isInChat"/>
-			<item value="inChat"/>
-			<item value="connect"/>
-			<item value="finish"/>
+			<item value="System.out"/>
+			<item value="retrievePendingClient"/>
+			<item value="SSCServerMessageReceiver"/>
+			<item value="work"/>
+			<item value="sender"/>
 		</list>
 		<list key="replacehistory">
+			<item value=""/>
 			<item value="isConnected"/>
 			<item value="isConnecting"/>
 			<item value="clientPartnerService"/>

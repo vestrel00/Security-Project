@@ -40,6 +40,25 @@ public class SSCServerMessageReceiver implements Runnable {
 	@Override
 	public void run() {
 		boolean debug;
+
+		// Need to call System.out.flush() for some reason... WHY??? TODO WHYY??
+		// Everything goes to hell if flush isn't called...
+		// BUG ON THE JDK?????? TODO FIND OUT!
+		while (service.getClientPartnerService().getReceiver() == null) {
+			System.out.flush(); // a random fix! like seriously wtf?
+			continue;
+		}
+
+		// flag our client that the other client is ready
+		try {
+			SSCStreamManager.sendBytes(out, "OK".getBytes());
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+
+		// set the service to be in chat
+		service.setOnChat(true);
+
 		try {
 			while (!socket.isOutputShutdown()) {
 				debug = service.getServerClass().getSettings().debugReceiverProtocol;
@@ -52,7 +71,7 @@ public class SSCServerMessageReceiver implements Runnable {
 				if (debug)
 					System.out.println(service.getClient().getName()
 							+ "Receiver: sending E(confirmCode)");
-				// tell client that it has been received
+				// send E(confirmCode)
 				SSCStreamManager.sendBytes(out,
 						crypt.encrypt(crypt.getConfirmCode()));
 
@@ -68,17 +87,29 @@ public class SSCServerMessageReceiver implements Runnable {
 				// authenticate
 				if (hem.length != hm.length)
 					return;
+
+				boolean confirmed = true;
 				for (int index = 0; index < hm.length; index++) {
-					if (hm[index] != hem[index]) // E(m) was tampered with
-						return;
+					if (hm[index] != hem[index]) { // E(m) was tampered with
+						confirmed = false;
+						break;
+					}
 				}
 
-				if (debug)
-					System.out.println(service.getClient().getName()
-							+ "Receiver: everything checked out");
-				// Everything checked out
-				service.getClient().getBuffer().addMessage(m);
-				service.getClientPartnerService().getSender().addToPending(m);
+				if (confirmed) {
+					if (debug)
+						System.out.println(service.getClient().getName()
+								+ "Receiver: everything checked out");
+					// Everything checked out
+					service.getClient().getBuffer().addMessage(m);
+					service.getClientPartnerService().getSender()
+							.addToPending(m);
+				} else {
+					System.out.println("Connection from "
+							+ service.getClient().getName() + " and "
+							+ service.getClient().getPartnerName()
+							+ " may be compromised.");
+				}
 			}
 		} catch (IOException e) {
 			service.stopService(true);

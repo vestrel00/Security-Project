@@ -5,7 +5,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.NoSuchAlgorithmException;
@@ -70,6 +69,7 @@ public class SSCClient {
 	 * @throws IOException
 	 */
 	private void init(int maxBufferSize) throws IOException {
+		// TODO prevent using null as user name
 		SSCStreamManager.sendBytes(out, "null".getBytes());
 		SSCStreamManager.readBytes(in);
 		SSCStreamManager.sendBytes(out, String.valueOf(maxBufferSize)
@@ -187,6 +187,7 @@ public class SSCClient {
 		} catch (IOException | IndexOutOfBoundsException e) {
 			finish();
 		}
+		
 		// this thread will remain listening for incoming service inputs
 		while (isRunning) {
 			if (!receiver.work())
@@ -239,35 +240,6 @@ public class SSCClient {
 	}
 
 	/**
-	 * Launch the sender thread that handles user input and sends those input to
-	 * the service's receiver which is being launched at the same time as this.
-	 * This opens up new input and output streams.
-	 * 
-	 * @throws UnknownHostException
-	 * @throws IOException
-	 */
-	// TODO wrap with RSA
-	private void initSender() throws UnknownHostException, IOException {
-		Socket sock = new Socket(host, port);
-		DataInputStream receptionIn = new DataInputStream(sock.getInputStream());
-		DataOutputStream receptionOut = new DataOutputStream(
-				sock.getOutputStream());
-
-		// Note: 2 different in/out streams at this point! Do not get confused.
-		// send username
-		SSCStreamManager.sendBytes(receptionOut, username.getBytes());
-		// wait for server reception OK
-		SSCStreamManager.readBytes(receptionIn);
-		// server should now have a new pending client in the pending list
-		// wait for the OK
-		SSCStreamManager.readBytes(receptionIn);
-
-		// finally init and launch the sender
-		sender = new SSCClientMessageSender(this, sock, crypt);
-		new Thread(sender).start();
-	}
-
-	/**
 	 * login succeeded now connect to another client that is also logged in the
 	 * server. Perform the client-client connection protocol with the server
 	 * service. <b>Server computes both the private key and confirm code</b>
@@ -317,6 +289,35 @@ public class SSCClient {
 	}
 
 	/**
+	 * Launch the sender thread that handles user input and sends those input to
+	 * the service's receiver which is being launched at the same time as this.
+	 * This opens up new input and output streams.
+	 * 
+	 * @throws UnknownHostException
+	 * @throws IOException
+	 */
+	// TODO wrap with RSA
+	private void initSender() throws UnknownHostException, IOException {
+		Socket sock = new Socket(host, port);
+		DataInputStream receptionIn = new DataInputStream(sock.getInputStream());
+		DataOutputStream receptionOut = new DataOutputStream(
+				sock.getOutputStream());
+
+		// Note: 2 different in/out streams at this point! Do not get confused.
+		// send username : will generate a pending client in the server list
+		SSCStreamManager.sendBytes(receptionOut, username.getBytes());
+		// wait for server reception OK
+		SSCStreamManager.readBytes(receptionIn);
+		// server should now have a new pending client in the pending list
+		// wait for the OK from the service's initReceiver.
+		SSCStreamManager.readBytes(receptionIn);
+
+		// finally init and launch the sender
+		sender = new SSCClientMessageSender(this, sock, crypt);
+		new Thread(sender).start();
+	}
+
+	/**
 	 * Finish the client program, closing all the streams and stopping the
 	 * protocol.
 	 * 
@@ -326,7 +327,7 @@ public class SSCClient {
 		closeIO();
 		socket.close();
 		// can close sender's IO here but readLine is still blocking
-		// doesn't matter either way- small thing. 
+		// doesn't matter either way- small thing.
 		// Note - tried writing to System.out
 		isRunning = false;
 		System.out.println("You have been logged out");

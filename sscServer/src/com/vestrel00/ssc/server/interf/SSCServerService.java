@@ -88,4 +88,9 @@ public interface SSCServerService extends Runnable {
 	 */
 	public boolean isInChat();
 
+	/**
+	 * Set this service to be in chat or not.
+	 */
+	public void setOnChat(boolean isInChat);
+
 }
