@@ -116,6 +116,7 @@ public class SSCSServiceStandard implements SSCServerService {
 		if (inService) {
 			if (isInChat) {
 				isInChat = false;
+				inService = false;
 				String lo = client.getName();
 				lo += " has logged out.";
 				clientPartnerService.getSender().addToPending(lo.getBytes());
@@ -256,13 +257,14 @@ public class SSCSServiceStandard implements SSCServerService {
 			// generate the confirmCode
 			confirmCode = new byte[4];
 			rand.nextBytes(confirmCode);
-			// set the keys for the other service in wait
+			// set the keys for the other service
 			clientPartnerService.setSecretKey(secretKey);
 			clientPartnerService.setConfirmCode(confirmCode);
 		} else { // this got here after the other service already computed keys
 			// wait for the other service to send over secret key
-			while (secretKey == null && confirmCode == null)
+			while (secretKey == null && confirmCode == null) {
 				continue;
+			}
 		}
 		// both services have the keys ready to send to their clients
 		SSCStreamManager.sendBytes(client.getOutputStream(), secretKey);

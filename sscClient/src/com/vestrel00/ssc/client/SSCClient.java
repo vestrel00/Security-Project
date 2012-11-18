@@ -187,7 +187,7 @@ public class SSCClient {
 		} catch (IOException | IndexOutOfBoundsException e) {
 			finish();
 		}
-		
+
 		// this thread will remain listening for incoming service inputs
 		while (isRunning) {
 			if (!receiver.work())
@@ -298,6 +298,7 @@ public class SSCClient {
 	 */
 	// TODO wrap with RSA
 	private void initSender() throws UnknownHostException, IOException {
+		// System.out.println(username + " generating new socket");
 		Socket sock = new Socket(host, port);
 		DataInputStream receptionIn = new DataInputStream(sock.getInputStream());
 		DataOutputStream receptionOut = new DataOutputStream(
@@ -306,12 +307,15 @@ public class SSCClient {
 		// Note: 2 different in/out streams at this point! Do not get confused.
 		// send username : will generate a pending client in the server list
 		SSCStreamManager.sendBytes(receptionOut, username.getBytes());
+		// System.out.println(username + " waiting for server OK");
 		// wait for server reception OK
 		SSCStreamManager.readBytes(receptionIn);
 		// server should now have a new pending client in the pending list
+		// System.out.println(username + " waiting for service OK");
 		// wait for the OK from the service's initReceiver.
 		SSCStreamManager.readBytes(receptionIn);
 
+		// System.out.println(username + " launching sender thread");
 		// finally init and launch the sender
 		sender = new SSCClientMessageSender(this, sock, crypt);
 		new Thread(sender).start();

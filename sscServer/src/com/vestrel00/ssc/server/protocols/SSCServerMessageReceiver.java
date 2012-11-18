@@ -40,7 +40,6 @@ public class SSCServerMessageReceiver implements Runnable {
 	@Override
 	public void run() {
 		boolean debug;
-
 		// Need to call System.out.flush() for some reason... WHY??? TODO WHYY??
 		// Everything goes to hell if flush isn't called...
 		// BUG ON THE JDK?????? TODO FIND OUT!

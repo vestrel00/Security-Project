@@ -137,6 +137,9 @@ public class SSCServerStandard implements SSCServer {
 		// minimize cpu but ehhhhhhhh optimization my ass - I just wanna finish
 		// this lol
 		while (retry) {
+			// TODO WHY DO WE NEED TO FLUSH SYSTEM.OUT????
+			// same thing for
+			System.out.flush();
 			for (index = 0; index < pending.size(); index++) {
 				if (pending.get(index).getName().contentEquals(name)) {
 					pc = pending.get(index);

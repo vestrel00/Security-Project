@@ -97,7 +97,7 @@ public class SSCServerMessageSender implements SSCProtocol {
 				pending.remove(0);
 			}
 		} catch (IOException | NoSuchAlgorithmException e) {
-			e.printStackTrace();
+			// Do nothing ?
 		}
 	}
 

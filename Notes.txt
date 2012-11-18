@@ -1,0 +1,22 @@
+The following are just notes for myself.
+
+There was a "bug" that took me an entire day to guess a working fix.
+I'm not sure if its a bug with the JDK or it is caused by the lack of synchronization
+of things when there are multiple threads.
+
+Anyways the following does not work the way I expect it to.
+while(condition)
+	continue;
+Once the condition is false, the next line of code after continue is not executed.
+
+FIX:
+while(condition){
+	System.out.flush();
+	continue;
+}
+The above fixes the "blocking" so execution does not stop. However, I never use
+System.out other than for printing debug messages using System.out.println();
+So why does System.out.flush(); need to be called??? I only got this fix though an entire
+day of trial and error / testing.
+
+

@@ -4,6 +4,7 @@ Fall 2012
 
 *READ THE ENTIRE THING PLEASE*
 
+I use Eclipse IDE.
 Source code for the server implementation is in sscServer folder.
 Source code for the client implementation is in sscClient folder.
 
