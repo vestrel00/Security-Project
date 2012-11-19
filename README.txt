@@ -1,6 +1,7 @@
 CS480 Project by Estrellado, Vandolf
 Simple Secure Chat (SSC)
 Fall 2012
+REAME
 
 *READ THE ENTIRE THING PLEASE*
 
@@ -15,6 +16,9 @@ so I'll just keep going with what I have...
 
 I've documented everything so you may get away with browsing my source 
 without having to read lines of code. Just read documentation to avoid headache!
+
+Refer to TODO.txt to see what is still left to be done.
+Refer to MANUAL.txt for instructions on how to run this though should be obvious.
 
 P.S.
 I said that I would do a GUI but I think I've spent too much time on this already. 

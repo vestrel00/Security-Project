@@ -1,0 +1,13 @@
+CS480 Project by Estrellado, Vandolf
+Simple Secure Chat (SSC)
+Fall 2012
+TODO List
+
+1) Wrap pre-chat transactions with RSA.
+
+2) Create friends list feature which would require a user to 
+be friends with users that he/she wish to chat with.
+
+3) Fix how connected but not logged in services are handled by server.
+
+4) Patch up unhandled exceptions.
