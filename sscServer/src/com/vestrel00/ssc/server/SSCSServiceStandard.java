@@ -1,6 +1,8 @@
 package com.vestrel00.ssc.server;
 
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 import com.vestrel00.ssc.server.datatypes.SSCPendingClient;
@@ -10,6 +12,7 @@ import com.vestrel00.ssc.server.interf.SSCServer;
 import com.vestrel00.ssc.server.interf.SSCServerService;
 import com.vestrel00.ssc.server.protocols.SSCServerMessageReceiver;
 import com.vestrel00.ssc.server.protocols.SSCServerMessageSender;
+import com.vestrel00.ssc.server.shared.SSCByteMethods;
 import com.vestrel00.ssc.server.shared.SSCCryptoAES;
 import com.vestrel00.ssc.server.shared.SSCStreamManager;
 
@@ -63,7 +66,7 @@ public class SSCSServiceStandard implements SSCServerService {
 	 * 
 	 * @throws IOException
 	 */
-	// TODO replace with actual implementation!
+	// TODO wrap with RSA
 	public boolean login() throws IOException {
 		int attempts = 0;
 		SSCStreamManager.sendBytes(client.getOutputStream(),
@@ -72,25 +75,50 @@ public class SSCSServiceStandard implements SSCServerService {
 				.getInputStream()));
 		if (choice.contentEquals("login")) {
 			while (attempts < 3) {
+				// messy patch
+				if (attempts > 0)
+					// need to read in choice - refer to client login protocol
+					SSCStreamManager.readBytes(client.getInputStream());
+
 				SSCStreamManager.sendBytes(client.getOutputStream(),
-						"Enter username".getBytes());
+						"OK".getBytes());
+				// wait for the username
 				String uname = new String(SSCStreamManager.readBytes(client
 						.getInputStream()));
-				SSCStreamManager.sendBytes(client.getOutputStream(),
-						"Enter password".getBytes());
-				String pass = new String(SSCStreamManager.readBytes(client
-						.getInputStream()));
-				if (true) {// if(database.authenticate(uname, pass))
-					if (serverClass.clientIsOnline(uname)) {
-						attempts++;
+				// send the salt or a bogus one
+				if (SSCServerDB.userExists(uname))
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							SSCServerDB.getSalt(uname));
+				else {
+					byte[] bogusSalt = new byte[8];
+					rand.nextBytes(bogusSalt);
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							bogusSalt);
+				}
+				// wait for the saltedHashedPass
+				byte[] saltedHashedPass = SSCStreamManager.readBytes(client
+						.getInputStream());
+
+				if (SSCServerDB.userExists(uname)) {
+					if (SSCByteMethods.equal(saltedHashedPass,
+							SSCServerDB.getSaltedHashedPass(uname))) {
+						if (serverClass.clientIsOnline(uname)) {
+							attempts++;
+							SSCStreamManager.sendBytes(
+									client.getOutputStream(), "bad".getBytes());
+						} else {
+							client.setName(uname);
+							SSCStreamManager
+									.sendBytes(client.getOutputStream(),
+											"good".getBytes());
+							System.out.println("User " + uname
+									+ " has logged in.");
+							return true;
+						}
+					} else {
 						SSCStreamManager.sendBytes(client.getOutputStream(),
 								"bad".getBytes());
-					} else {
-						client.setName(uname);
-						SSCStreamManager.sendBytes(client.getOutputStream(),
-								"good".getBytes());
-						System.out.println("User " + uname + " has logged in.");
-						return true;
+						attempts++;
 					}
 				} else {
 					SSCStreamManager.sendBytes(client.getOutputStream(),
@@ -99,16 +127,58 @@ public class SSCSServiceStandard implements SSCServerService {
 				}
 			}
 			return false;
-		} else if (choice.contentEquals("create"))
-			return createAccount();
-		else
+		} else if (choice.contentEquals("create")) {
+			createAccount();
+			return login();
+		} else
 			return false;
 
 	}
 
-	private boolean createAccount() {
-		// TODO store in database H(m) and the salt
-		return true;
+	/**
+	 * Perform the create protocol with the client.
+	 * 
+	 * @throws IOException
+	 * 
+	 */
+	// TODO Wrap with RSA
+	private void createAccount() throws IOException {
+		boolean retry = true;
+		while (retry) {
+			// wait for the username
+			String uname = new String(SSCStreamManager.readBytes(client
+					.getInputStream()));
+			if (SSCServerDB.userExists(uname)) {
+				SSCStreamManager.sendBytes(client.getOutputStream(),
+						"bad".getBytes());
+				continue;
+			}
+			SSCStreamManager.sendBytes(client.getOutputStream(),
+					"good".getBytes());
+			// wait for the password
+			byte[] pass = SSCStreamManager.readBytes(client.getInputStream());
+			// user requests to start over
+			if (new String(pass).contentEquals("restart")) {
+				System.out.flush();
+				continue;
+			}
+
+			SSCStreamManager.sendBytes(client.getOutputStream(),
+					"good".getBytes());
+			// create the user
+			byte[] saltB = new byte[8];
+			rand.nextBytes(saltB);
+			try {
+				SSCServerDB.createUser(
+						uname,
+						saltB,
+						MessageDigest.getInstance("SHA-1").digest(
+								SSCByteMethods.concat(saltB, pass)));
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			}
+			retry = false;
+		}
 	}
 
 	@Override
@@ -146,6 +216,12 @@ public class SSCSServiceStandard implements SSCServerService {
 	@Override
 	public void run() {
 		try {
+			// TODO Once a client connects, it is added onto the service
+			// list, however with name = null. So if more than one client is
+			// connected but has not logged in, how can we tell which client
+			// to remove if their name is null? Answer is to make name as an
+			// integer if client is connected but not logged in instead of
+			// null.
 			login();
 			option();
 		} catch (IOException e) {

@@ -1,8 +1,0 @@
-package com.vestrel00.ssc.server;
-
-public class InvalidKeyLengthException extends Exception {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 987651234L;
-}

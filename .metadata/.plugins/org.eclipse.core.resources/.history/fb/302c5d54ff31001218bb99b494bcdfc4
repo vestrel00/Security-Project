@@ -1,0 +1,21 @@
+package com.vestrel00.ssc.server.protocols;
+
+/**
+ * Simple class containing simple methods to handle byte[].
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
+public class SSCByteMethods {
+	
+	/**
+	 * Concatenate a with b : a + b
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static byte[] concat(byte[] a, byte[] b){
+		
+	}
+
+}

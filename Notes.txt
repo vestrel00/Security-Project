@@ -19,4 +19,8 @@ System.out other than for printing debug messages using System.out.println();
 So why does System.out.flush(); need to be called??? I only got this fix though an entire
 day of trial and error / testing.
 
+See:
+SSCServerStandard.retrievePendingClient
+SSCServerMessageReceiver.run
+
 

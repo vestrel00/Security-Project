@@ -68,15 +68,21 @@ public class SSCServerStandard implements SSCServer {
 				e.printStackTrace();
 			}
 
-			int size = clientServices.size();
-			for (int i = 0; i < size; i++)
-				clientServices.get(0).stopService(true);
+			try {
+				int size = clientServices.size();
+				for (int i = 0; i < size; i++)
+					if (clientServices.get(0).getClient().getName() != null)
+						clientServices.get(0).stopService(true);
 
-			// double check
-			size = clientServices.size();
-			for (int i = 0; i < size; i++)
-				clientServices.get(0).stopService(true);
+				// double check
+				size = clientServices.size();
+				for (int i = 0; i < size; i++)
+					clientServices.get(0).stopService(true);
+			} catch (IndexOutOfBoundsException e) {
+				// tis might arise due to multi-threading
+			}
 
+			SSCServerDB.finish();
 			System.out.println("Server successfully shutdown.");
 		}
 	}
@@ -88,8 +94,10 @@ public class SSCServerStandard implements SSCServer {
 	@Override
 	public SSCServerService getServiceByName(String clientName) {
 		for (SSCServerService service : clientServices) {
-			if (service.getClient().getName().contentEquals(clientName))
-				return service;
+			// TODO REMOVE once nulls are replaced with numbers
+			if (service.getClient().getName() != null)
+				if (service.getClient().getName().contentEquals(clientName))
+					return service;
 		}
 		return null;
 	}
@@ -108,19 +116,27 @@ public class SSCServerStandard implements SSCServer {
 		return false;
 	}
 
+	// TODO Once a client connects, it is added onto the service
+	// list, however with name = null. So if more than one client is
+	// connected but has not logged in, how can we tell which client
+	// to remove if their name is null? Answer is to make name as an
+	// integer if client is connected but not logged in instead of
+	// null.
 	@Override
 	public void removeService(String clientName, int clientBufferId) {
 		int index = -1;
 		for (int i = 0; i < clientServices.size(); i++)
-			if (clientServices.get(i).getClient().getName()
-					.contentEquals(clientName)) {
-				index = i;
-				break;
-			}
+			if (clientServices.get(i).getClient().getName() != null)
+				if (clientServices.get(i).getClient().getName()
+						.contentEquals(clientName)) {
+					index = i;
+					break;
+				}
 		if (index != -1)
 			clientServices.remove(index);
 		buffer.removeClientById(clientBufferId);
-		System.out.println("User " + clientName + " has logged out.");
+		if (clientName != null)
+			System.out.println("User " + clientName + " has logged out.");
 	}
 
 	@Override
@@ -367,6 +383,12 @@ public class SSCServerStandard implements SSCServer {
 		 * connected but have not yet logged in. These users at that point have
 		 * name 'null'".
 		 */
+		// TODO Once a client connects, it is added onto the service
+		// list, however with name = null. So if more than one client is
+		// connected but has not logged in, how can we tell which client
+		// to remove if their name is null? Answer is to make name as an
+		// integer if client is connected but not logged in instad of
+		// null.
 		private void printLoggedInUsers() {
 			String users = "";
 			int count = 0;

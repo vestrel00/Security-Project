@@ -3,6 +3,7 @@ package com.vestrel00.ssc.server;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.sql.SQLException;
 
 import com.vestrel00.ssc.server.interf.SSCServer;
 
@@ -26,7 +27,20 @@ public class SSCServerMain {
 		enterPort();
 		enterCapacity();
 		enterBufferSize();
+		initDB();
 		initServer();
+	}
+
+	private static void initDB() {
+		System.out.println("Initializing database...");
+		System.out
+				.println("This may take 20 seconds if the database has not been created.");
+		try {
+			SSCServerDB.init();
+		} catch (InstantiationException | IllegalAccessException
+				| ClassNotFoundException | SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private static void initServer() throws IOException {
@@ -50,7 +64,7 @@ public class SSCServerMain {
 		} catch (NumberFormatException e) {
 			System.out.println("Invalid number format.");
 			enterPort();
-		} 
+		}
 	}
 
 	private static void enterCapacity() throws IOException {
@@ -61,7 +75,7 @@ public class SSCServerMain {
 		} catch (NumberFormatException e) {
 			System.out.println("Invalid number format.");
 			enterCapacity();
-		} 
+		}
 	}
 
 	private static void enterBufferSize() throws IOException {
@@ -71,7 +85,7 @@ public class SSCServerMain {
 		} catch (NumberFormatException e) {
 			System.out.println("Invalid number format.");
 			enterBufferSize();
-		} 
+		}
 	}
 
 }

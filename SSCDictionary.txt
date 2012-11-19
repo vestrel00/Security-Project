@@ -8,3 +8,6 @@ len
 admin
 init
 wtf
+db
+clob
+clobs

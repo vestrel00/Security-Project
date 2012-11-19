@@ -7,12 +7,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import com.vestrel00.ssc.client.interf.SSCCrypto;
 import com.vestrel00.ssc.client.interf.SSCProtocol;
 import com.vestrel00.ssc.client.protocols.SSCClientMessageSender;
 import com.vestrel00.ssc.client.protocols.SSCClientMessageReceiver;
+import com.vestrel00.ssc.client.shared.SSCByteMethods;
 import com.vestrel00.ssc.client.shared.SSCCryptoAES;
 import com.vestrel00.ssc.client.shared.SSCStreamManager;
 
@@ -126,9 +128,11 @@ public class SSCClient {
 			String choice = userIn.readLine();
 			if (choice.contentEquals("login")) {
 				while (attempts < 3) {
+					// flag service to perform login protocol
 					SSCStreamManager.sendBytes(out, choice.getBytes());
-					System.out.println(new String(SSCStreamManager
-							.readBytes(in)));
+					// wait for the OK
+					SSCStreamManager.readBytes(in);
+					System.out.println("Enter username");
 
 					boolean retry = true;
 					try {
@@ -137,11 +141,21 @@ public class SSCClient {
 							username = userIn.readLine();
 							SSCStreamManager
 									.sendBytes(out, username.getBytes());
-							System.out.println(new String(SSCStreamManager
-									.readBytes(in)));
-							// send password
-							SSCStreamManager.sendBytes(out, userIn.readLine()
-									.getBytes());
+							// wait for the salt (this is a bogus value if
+							// given username does not exist)
+							byte[] salt = SSCStreamManager.readBytes(in);
+							System.out.println("Enter password");
+							// send saltedHashedPassword
+							try {
+								SSCStreamManager.sendBytes(
+										out,
+										MessageDigest.getInstance("SHA-1")
+												.digest(SSCByteMethods.concat(
+														salt, userIn.readLine()
+																.getBytes())));
+							} catch (NoSuchAlgorithmException e) {
+								e.printStackTrace();
+							}
 							retry = false;
 						}
 					} catch (IndexOutOfBoundsException e) {
@@ -152,24 +166,54 @@ public class SSCClient {
 						System.out.println("Login successful");
 						return true;
 					} else {
-						System.out
-								.println("Unable to login.\n"
-										+ "User may already be online or name and/or password is incorrect.");
+						System.out.println("Unable to login.\n"
+								+ "User may not exist or is already be online "
+								+ "or name and/or password is incorrect.");
 						attempts++;
 					}
 				}
 				return false;
-			} else if (choice.contentEquals("create"))
-				return createAccount();
-			else if (choice != null)
+			} else if (choice.contentEquals("create")) {
+				// Flag the service to perform the createAccount Protocol
+				SSCStreamManager.sendBytes(out, "create".getBytes());
+				createAccount();
+				return login();
+			} else if (choice != null)
 				System.out.println("Unknown command : " + choice);
 		}
 	}
 
-	private boolean createAccount() throws IOException {
-		// TODO Auto-generated method stub
-		SSCStreamManager.sendBytes(out, "create".getBytes());
-		return true;
+	/**
+	 * Perform the create protocol with the service.
+	 * 
+	 */
+	// TODO Wrap with RSA
+	private void createAccount() throws IOException {
+		boolean retry = true;
+		try {
+			while (retry) {
+				System.out.println("Enter username");
+				// Send username
+				SSCStreamManager.sendBytes(out, userIn.readLine().getBytes());
+				// Wait for server response
+				String response = new String(SSCStreamManager.readBytes(in));
+				if (response.contentEquals("bad")) {
+					System.out.println("Username is already taken.");
+					continue;
+				}
+				System.out.println("Enter password");
+				// Send password
+				SSCStreamManager.sendBytes(out, userIn.readLine().getBytes());
+				// wait for server response
+				SSCStreamManager.readBytes(in);
+				System.out.println("Account created successfully.");
+				retry = false;
+			}
+		} catch (IndexOutOfBoundsException e) {
+			System.out.println("Invalid input.");
+			SSCStreamManager.sendBytes(out, "restart".getBytes());
+			createAccount();
+		}
 	}
 
 	/**
