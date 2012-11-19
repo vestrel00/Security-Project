@@ -8,9 +8,17 @@ Note that this manual is for the UNFINISHED project. Meaning this will change.
 1) Open up 3 or more shells / terminals
 2) Terminal 1 : cd /location/of/server.jar
 3) Terminal 1 : java -jar server.jar
+
 4) Terminal 1 : set up the server as prompted by the program until server started
-5) Terminal 2 : cd /location/of/client.jar
+				When asked to enter the port number choose an unused port. 
+				Try 8080 or 8000 or thousands others.
+
+5) Terminal 2 : cd /location/of/client.jar then java -jar client.jar
+
 6) Terminal 2 : set up the client as prompted by the program until asked to login or create.
+				When asked to enter the host name enter localhost or 127.0.0.1 or just hit enter.
+				When asked to enter the port enter the port used to set up the server.
+
 7) Terminal 2 : choose create and then login then go to terminal 3 
 8) Terminal 3 : repeat steps 5) to 7) in Terminal 3
 9) Terminal 2 : choose connect and enter Terminal 3's username
