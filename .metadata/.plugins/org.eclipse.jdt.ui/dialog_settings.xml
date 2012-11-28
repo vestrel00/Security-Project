@@ -30,14 +30,14 @@
 		<item value="3" key="pageIndex"/>
 	</section>
 	<section name="FatJarPackageWizard">
-		<item value="/home/vestrel00/Downloads/server.jar" key="FatJarPackageWizardPage.DESTINATION_PATH_SELECTION"/>
-		<item value="Server - sscServer" key="FatJarPackageWizardPage.LAUNCH_CONFIGURATION_SELECTION_NAME"/>
+		<item value="/home/vestrel00/Downloads/client.jar" key="FatJarPackageWizardPage.DESTINATION_PATH_SELECTION"/>
+		<item value="Client - sscClient" key="FatJarPackageWizardPage.LAUNCH_CONFIGURATION_SELECTION_NAME"/>
 		<item value="/home/vestrel00/Projects/480Proj" key="FatJarPackageWizardPage.ANTSCRIPT_LOCATION"/>
 		<item value="false" key="FatJarPackageWizardPage.ANTSCRIPT_SAVE"/>
 		<item value="1" key="FatJarPackageWizardPage.LIBRARY_HANDLING"/>
 		<list key="FatJarPackageWizardPage.DESTINATION_NAMES_ID">
-			<item value="/home/vestrel00/Downloads/server.jar"/>
 			<item value="/home/vestrel00/Downloads/client.jar"/>
+			<item value="/home/vestrel00/Downloads/server.jar"/>
 			<item value="/home/vestrel00/Downloads/client2.jar"/>
 		</list>
 		<list key="FatJarPackageWizardPage.ANTSCRIPT_LOCATION_HISTORY">
@@ -59,9 +59,9 @@
 		<item value="false" key="create_package_info_java"/>
 	</section>
 	<section name="org.eclipse.jdt.internal.ui.typehierarchy.QuickHierarchy">
-		<item value="404" key="org.eclipse.jdt.internal.ui.typehierarchy.HierarchyInformationControlDIALOG_WIDTH"/>
+		<item value="406" key="org.eclipse.jdt.internal.ui.typehierarchy.HierarchyInformationControlDIALOG_WIDTH"/>
 		<item value="false" key="org.eclipse.jdt.internal.ui.typehierarchy.HierarchyInformationControlDIALOG_USE_PERSISTED_LOCATION"/>
-		<item value="489" key="org.eclipse.jdt.internal.ui.typehierarchy.HierarchyInformationControlDIALOG_HEIGHT"/>
+		<item value="522" key="org.eclipse.jdt.internal.ui.typehierarchy.HierarchyInformationControlDIALOG_HEIGHT"/>
 		<item value="true" key="org.eclipse.jdt.internal.ui.typehierarchy.HierarchyInformationControlDIALOG_USE_PERSISTED_SIZE"/>
 	</section>
 	<section name="org.eclipse.jdt.internal.ui.packageview.PackageExplorerPart">

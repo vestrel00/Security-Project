@@ -1,5 +1,7 @@
 package com.vestrel00.ssc.client.shared;
 
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
@@ -7,18 +9,21 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.vestrel00.ssc.client.SSCClient;
 import com.vestrel00.ssc.client.interf.SSCCrypto;
 
 /**
- * Simple asymmetric crypto using AES.
+ * Simple asymmetric crypto using AES in CBC mode.
  * 
  * @author Estrellado, Vandolf
  * 
  */
 public class SSCCryptoAES implements SSCCrypto {
 
+	private SSCClient client;
 	private Cipher cipher;
 	private SecretKeySpec spec;
 	private byte[] key, confirmCode;
@@ -36,10 +41,11 @@ public class SSCCryptoAES implements SSCCrypto {
 	 * 
 	 * @throws InvalidKeyLengthException
 	 */
-	public SSCCryptoAES(byte[] key, byte[] confirmCode)
+	public SSCCryptoAES(SSCClient client, byte[] key, byte[] confirmCode)
 			throws IllegalArgumentException {
 		if (key.length != 16)
 			throw new IllegalArgumentException("length of key must = 16");
+		this.client = client;
 		this.key = key;
 		this.confirmCode = confirmCode;
 	}
@@ -47,7 +53,23 @@ public class SSCCryptoAES implements SSCCrypto {
 	@Override
 	public byte[] encrypt(byte[] message) {
 		try {
-			perform(Cipher.ENCRYPT_MODE);
+			cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+			spec = new SecretKeySpec(key, "AES");
+			cipher.init(Cipher.ENCRYPT_MODE, spec);
+			byte[] iv = cipher.getIV();
+			try {
+				// send iv to client partner
+				SSCStreamManager.sendBytes(
+						client.getSender().getOutputStream(), iv);
+				// wait for confirmCode
+				SSCStreamManager.readBytes(client.getSender().getInputStream());
+			} catch (IOException e) {
+				try {
+					client.finish();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
 			return cipher.doFinal(message);
 		} catch (NoSuchAlgorithmException | NoSuchPaddingException
 				| InvalidKeyException | IllegalBlockSizeException
@@ -58,23 +80,18 @@ public class SSCCryptoAES implements SSCCrypto {
 	}
 
 	@Override
-	public byte[] decrypt(byte[] message) {
+	public byte[] decrypt(byte[] message, byte[] iv) {
 		try {
-			perform(Cipher.DECRYPT_MODE);
+			cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+			spec = new SecretKeySpec(key, "AES");
+			cipher.init(Cipher.DECRYPT_MODE, spec, new IvParameterSpec(iv));
 			return cipher.doFinal(message);
 		} catch (NoSuchAlgorithmException | NoSuchPaddingException
 				| InvalidKeyException | IllegalBlockSizeException
-				| BadPaddingException e) {
+				| BadPaddingException | InvalidAlgorithmParameterException e) {
 			e.printStackTrace();
 		}
 		return null;
-	}
-
-	private void perform(int mode) throws NoSuchAlgorithmException,
-			NoSuchPaddingException, InvalidKeyException {
-		cipher = Cipher.getInstance("AES");
-		spec = new SecretKeySpec(key, "AES");
-		cipher.init(mode, spec);
 	}
 
 	@Override

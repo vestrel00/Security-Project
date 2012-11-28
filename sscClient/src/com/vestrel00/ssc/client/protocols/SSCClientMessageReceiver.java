@@ -49,17 +49,27 @@ public class SSCClientMessageReceiver implements SSCProtocol {
 			byte[] em = SSCStreamManager.readBytes(client
 					.getServerInputStream());
 			// System.out.println(client.getUserName()
-			// + "Receiver: sending E(confirmCode)");
-			// send E(confirmCode)
+			// + "Receiver: sending confirmCode");
+			// send confirmCode
 			SSCStreamManager.sendBytes(client.getOutputStream(),
-					crypt.encrypt(crypt.getConfirmCode()));
+					crypt.getConfirmCode());
+			// System.out.println(client.getUserName()
+			// + "Receiver: waiting for IV");
+			// Wait for IV
+			byte[] iv = SSCStreamManager.readBytes(client
+					.getServerInputStream());
+			// System.out.println(client.getUserName()
+			// + "Receiver: sending confirmCode");
+			// send confirmCode
+			SSCStreamManager.sendBytes(client.getOutputStream(),
+					crypt.getConfirmCode());
 			// System.out.println(client.getUserName()
 			// + "Receiver: waiting for H(m)");
 			// Wait for H(m)
 			byte[] hm = SSCStreamManager.readBytes(client
 					.getServerInputStream());
 			// m
-			byte[] m = crypt.decrypt(em);
+			byte[] m = crypt.decrypt(em, iv);
 			// H(E(m))
 			byte[] hem = MessageDigest.getInstance("SHA-1").digest(m);
 			// authenticate

@@ -328,7 +328,7 @@ public class SSCClient {
 		SSCStreamManager.sendBytes(out, "ok".getBytes());
 		// wait for confirmCode
 		byte[] confirmCode = SSCStreamManager.readBytes(in);
-		crypt = new SSCCryptoAES(secretKey, confirmCode);
+		crypt = new SSCCryptoAES(this, secretKey, confirmCode);
 		receiver = new SSCClientMessageReceiver(this, crypt);
 	}
 
@@ -399,6 +399,10 @@ public class SSCClient {
 
 	public SSCProtocol getReceiver() {
 		return receiver;
+	}
+
+	public SSCClientMessageSender getSender() {
+		return sender;
 	}
 
 	public boolean isRunning() {

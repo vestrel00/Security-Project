@@ -11,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 
 import com.vestrel00.ssc.client.SSCClient;
 import com.vestrel00.ssc.client.interf.SSCCrypto;
+import com.vestrel00.ssc.client.shared.SSCByteMethods;
 import com.vestrel00.ssc.client.shared.SSCStreamManager;
 
 /**
@@ -66,13 +67,24 @@ public class SSCClientMessageSender implements Runnable {
 	public void run() {
 		String mStr;
 		// wait for the other client to get to this point
+		// will proceed to chat if OK
+		// else client will finish() due to closed service socket
+		// also ending this thread
 		try {
-			SSCStreamManager.readBytes(in);
+			if (SSCByteMethods.equal(SSCStreamManager.readBytes(in),
+					"OK".getBytes()))
+				System.out.println("You are now chatting with "
+						+ client.getPartnerName());
+			else {
+				System.out.println(client.getPartnerName()
+						+ " is now chatting with someone else.\n"
+						+ "You have been dumped.");
+				closeIO();
+				return;
+			}
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
-		System.out.println("You are now chatting with "
-				+ client.getPartnerName());
 
 		try {
 			// wait for user input
@@ -85,12 +97,12 @@ public class SSCClientMessageSender implements Runnable {
 				SSCStreamManager.sendBytes(out, crypt.encrypt(mStr.getBytes()));
 
 				// System.out.println(client.getUserName()
-				// + "Sender: waiting for E(confirmCode)");
-				// wait for server E(confirmCode)
-				byte[] resultCode = crypt.decrypt(SSCStreamManager
-						.readBytes(in));
+				// + "Sender: waiting for confirmCode");
+				// wait for server confirmCode
+				byte[] resultCode = SSCStreamManager.readBytes(in);
 
-				boolean confirmed = true;
+				boolean confirmed = SSCByteMethods.equal(
+						crypt.getConfirmCode(), resultCode);
 				for (int i = 0; i < resultCode.length; i++)
 					if (resultCode[i] != crypt.getConfirmCode()[i]) {
 						confirmed = false;
@@ -114,6 +126,14 @@ public class SSCClientMessageSender implements Runnable {
 		} finally {
 			closeIO();
 		}
+	}
+
+	public DataOutputStream getOutputStream() {
+		return out;
+	}
+
+	public DataInputStream getInputStream() {
+		return in;
 	}
 
 	/**

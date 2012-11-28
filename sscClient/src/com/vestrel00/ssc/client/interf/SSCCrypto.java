@@ -20,10 +20,12 @@ public interface SSCCrypto {
 	 * 
 	 * @param message
 	 *            to decrypt
+	 * @param iv
+	 *            the initialization vector fed into AES CBC mode
 	 * @return the decrypted message
 	 */
-	public byte[] decrypt(byte[] message);
-	
+	public byte[] decrypt(byte[] message, byte[] iv);
+
 	/**
 	 * 
 	 * @return the stored confirm code.

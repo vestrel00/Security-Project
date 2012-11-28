@@ -187,15 +187,6 @@ public class SSCSServiceStandard implements SSCServerService {
 			if (isInChat) {
 				isInChat = false;
 				inService = false;
-				String lo = client.getName();
-				lo += " has logged out.";
-				clientPartnerService.getSender().addToPending(lo.getBytes());
-				// wait 1 second before stopping the other service for the above
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
 				clientPartnerService.stopService(true);
 			}
 			inService = false;
@@ -296,7 +287,10 @@ public class SSCSServiceStandard implements SSCServerService {
 			else if (serverClass.clientIsOnline(client.getPartnerName())) {
 				clientPartnerService = serverClass.getServiceByName(client
 						.getPartnerName());
-				if (!clientPartnerService.isInChat()) {
+				if (!clientPartnerService.isInChat()
+						&& (!clientPartnerService.isConnected() || clientPartnerService
+								.getClient().getPartnerName()
+								.contentEquals(client.getName()))) {
 					SSCStreamManager.sendBytes(client.getOutputStream(),
 							"online".getBytes());
 					retry = false;

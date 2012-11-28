@@ -1,8 +1,6 @@
 package com.vestrel00.ssc.server.protocols;
 
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +23,7 @@ public class SSCServerMessageSender implements SSCProtocol {
 	private SSCServerService service;
 	private SSCCrypto crypt;
 	private boolean isWorking;
-	private List<byte[]> pending;
+	private List<byte[]> pendingEM, pendingHM, pendingIV;
 
 	/**
 	 * Initialize the protocol as well as the crypto.
@@ -39,7 +37,9 @@ public class SSCServerMessageSender implements SSCProtocol {
 		this.service = service;
 		this.crypt = crypt;
 		isWorking = true;
-		pending = new ArrayList<byte[]>();
+		pendingEM = new ArrayList<byte[]>();
+		pendingHM = new ArrayList<byte[]>();
+		pendingIV = new ArrayList<byte[]>();
 	}
 
 	@Override
@@ -59,7 +59,7 @@ public class SSCServerMessageSender implements SSCProtocol {
 	public void performMagic() {
 		boolean debug;
 		try {
-			if (pending.size() > 0) {
+			if (pendingEM.size() > 0) {
 				debug = service.getServerClass().getSettings().debugSenderProtocol;
 
 				if (debug)
@@ -67,14 +67,25 @@ public class SSCServerMessageSender implements SSCProtocol {
 							+ " Sender: forwarding E(m)");
 				// send E(m)
 				SSCStreamManager.sendBytes(service.getClient()
-						.getOutputStream(), crypt.encrypt(pending.get(0)));
+						.getOutputStream(), pendingEM.get(0));
+
+				// wait for client confirmCode
+				byte[] resultCode = SSCStreamManager.readBytes(service
+						.getClient().getInputStream());
+
+				if (debug)
+					System.out.println(service.getClient().getName()
+							+ " Sender: forwarding IV)");
+				// send IV
+				SSCStreamManager.sendBytes(service.getClient()
+						.getOutputStream(), pendingIV.get(0));
 
 				if (debug)
 					System.out.println(service.getClient().getName()
 							+ "Sender: waiting for client E(confirmCode)");
-				// wait for client E(confirmCode)
-				byte[] resultCode = crypt.decrypt(SSCStreamManager
-						.readBytes(service.getClient().getInputStream()));
+				// wait for client confirmCode
+				resultCode = SSCStreamManager.readBytes(service
+						.getClient().getInputStream());
 
 				boolean confirmed = true;
 				for (int i = 0; i < resultCode.length; i++)
@@ -88,21 +99,29 @@ public class SSCServerMessageSender implements SSCProtocol {
 						System.out.println(service.getClient().getName()
 								+ "Sender: sending H(m)");
 					// send H(m)
-					SSCStreamManager.sendBytes(
-							service.getClient().getOutputStream(),
-							MessageDigest.getInstance("SHA-1").digest(
-									pending.get(0)));
+					SSCStreamManager.sendBytes(service.getClient()
+							.getOutputStream(), pendingHM.get(0));
 				} else
 					return;// something went wrong - do not send the message
-				pending.remove(0);
+				pendingEM.remove(0);
+				pendingHM.remove(0);
+				pendingIV.remove(0);
 			}
-		} catch (IOException | NoSuchAlgorithmException e) {
+		} catch (IOException e) {
 			// Do nothing ?
 		}
 	}
 
-	public void addToPending(byte[] m) {
-		pending.add(m);
+	public void addToPendingEM(byte[] em) {
+		pendingEM.add(em);
+	}
+
+	public void addToPendingHM(byte[] hm) {
+		pendingHM.add(hm);
+	}
+
+	public void addToPendingIV(byte[] iv) {
+		pendingIV.add(iv);
 	}
 
 }

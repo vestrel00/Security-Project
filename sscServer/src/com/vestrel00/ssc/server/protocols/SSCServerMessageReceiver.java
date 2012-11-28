@@ -49,30 +49,45 @@ public class SSCServerMessageReceiver implements Runnable {
 		}
 
 		// flag our client that the other client is ready
+		// or end this client's service if partner client
 		try {
-			SSCStreamManager.sendBytes(out, "OK".getBytes());
+			if (service.getClientPartnerService().getClient().getPartnerName()
+					.contentEquals(service.getClient().getName())) {
+				SSCStreamManager.sendBytes(out, "OK".getBytes());
+				// set the service to be in chat
+				service.setOnChat(true);
+			} else {
+				SSCStreamManager.sendBytes(out, "NO".getBytes());
+				service.stopService(true);
+				closeIO();
+				return;
+			}
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
-
-		// set the service to be in chat
-		service.setOnChat(true);
 
 		try {
 			while (!socket.isOutputShutdown()) {
 				debug = service.getServerClass().getSettings().debugReceiverProtocol;
 				if (debug)
 					System.out.println(service.getClient().getName()
-							+ "Receiver: waiting for E(m)");
-				// Wait for E(m)
+							+ "Receiver: waiting for IV");
+				// wait for IV (initialization vector used for decryption)
+				byte[] iv = SSCStreamManager.readBytes(in);
+
+				if (debug)
+					System.out.println(service.getClient().getName()
+							+ "Receiver: sending confirmCode");
+				// send confirmCode
+				SSCStreamManager.sendBytes(out, crypt.getConfirmCode());
+				// wait for em
 				byte[] em = SSCStreamManager.readBytes(in);
 
 				if (debug)
 					System.out.println(service.getClient().getName()
-							+ "Receiver: sending E(confirmCode)");
-				// send E(confirmCode)
-				SSCStreamManager.sendBytes(out,
-						crypt.encrypt(crypt.getConfirmCode()));
+							+ "Receiver: sending confirmCode");
+				// send confirmCode
+				SSCStreamManager.sendBytes(out, crypt.getConfirmCode());
 
 				if (debug)
 					System.out.println(service.getClient().getName()
@@ -80,7 +95,7 @@ public class SSCServerMessageReceiver implements Runnable {
 				// Wait for H(m)
 				byte[] hm = SSCStreamManager.readBytes(in);
 				// m
-				byte[] m = crypt.decrypt(em);
+				byte[] m = crypt.decrypt(em, iv);
 				// H(E(m))
 				byte[] hem = MessageDigest.getInstance("SHA-1").digest(m);
 				// authenticate
@@ -101,8 +116,13 @@ public class SSCServerMessageReceiver implements Runnable {
 								+ "Receiver: everything checked out");
 					// Everything checked out
 					service.getClient().getBuffer().addMessage(m);
+					// make sure hm and iv are stored before em!
 					service.getClientPartnerService().getSender()
-							.addToPending(m);
+							.addToPendingHM(hm);
+					service.getClientPartnerService().getSender()
+							.addToPendingIV(iv);
+					service.getClientPartnerService().getSender()
+							.addToPendingEM(em);
 				} else {
 					System.out.println("Connection from "
 							+ service.getClient().getName() + " and "
