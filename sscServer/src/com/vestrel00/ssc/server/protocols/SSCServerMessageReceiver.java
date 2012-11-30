@@ -8,19 +8,25 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import com.vestrel00.ssc.server.shared.SSCStreamManager;
-import com.vestrel00.ssc.server.interf.SSCCrypto;
+import com.vestrel00.ssc.server.interf.SSCCryptoPrivate;
 import com.vestrel00.ssc.server.interf.SSCServerService;
 
+/**
+ * Listens for incoming messages from the client program.
+ * 
+ * @author Estrellado, Vandolf
+ * 
+ */
 public class SSCServerMessageReceiver implements Runnable {
 
 	private SSCServerService service;
-	private SSCCrypto crypt;
+	private SSCCryptoPrivate crypt;
 	private DataOutputStream out;
 	private DataInputStream in;
 	private Socket socket;
 
 	public SSCServerMessageReceiver(SSCServerService service, Socket socket,
-			SSCCrypto crypt) {
+			SSCCryptoPrivate crypt) {
 		this.service = service;
 		this.socket = socket;
 		this.crypt = crypt;
@@ -69,19 +75,24 @@ public class SSCServerMessageReceiver implements Runnable {
 		try {
 			while (!socket.isOutputShutdown()) {
 				debug = service.getServerClass().getSettings().debugReceiverProtocol;
+
 				if (debug)
 					System.out.println(service.getClient().getName()
-							+ "Receiver: waiting for IV");
-				// wait for IV (initialization vector used for decryption)
-				byte[] iv = SSCStreamManager.readBytes(in);
+							+ "Receiver: waiting for em");
+				// wait for em
+				byte[] em = SSCStreamManager.readBytes(in);
 
 				if (debug)
 					System.out.println(service.getClient().getName()
 							+ "Receiver: sending confirmCode");
 				// send confirmCode
 				SSCStreamManager.sendBytes(out, crypt.getConfirmCode());
-				// wait for em
-				byte[] em = SSCStreamManager.readBytes(in);
+
+				if (debug)
+					System.out.println(service.getClient().getName()
+							+ "Receiver: waiting for IV");
+				// wait for IV (initialization vector used for decryption)
+				byte[] iv = SSCStreamManager.readBytes(in);
 
 				if (debug)
 					System.out.println(service.getClient().getName()

@@ -5,7 +5,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import com.vestrel00.ssc.client.SSCClient;
-import com.vestrel00.ssc.client.interf.SSCCrypto;
+import com.vestrel00.ssc.client.interf.SSCCryptoPrivate;
 import com.vestrel00.ssc.client.interf.SSCProtocol;
 import com.vestrel00.ssc.client.shared.SSCStreamManager;
 
@@ -19,9 +19,9 @@ import com.vestrel00.ssc.client.shared.SSCStreamManager;
 public class SSCClientMessageReceiver implements SSCProtocol {
 
 	private SSCClient client;
-	private SSCCrypto crypt;
+	private SSCCryptoPrivate crypt;
 
-	public SSCClientMessageReceiver(SSCClient client, SSCCrypto crypt) {
+	public SSCClientMessageReceiver(SSCClient client, SSCCryptoPrivate crypt) {
 		this.client = client;
 		this.crypt = crypt;
 	}

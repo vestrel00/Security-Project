@@ -1,6 +1,5 @@
 package com.vestrel00.ssc.client.shared;
 
-import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -12,8 +11,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.vestrel00.ssc.client.SSCClient;
-import com.vestrel00.ssc.client.interf.SSCCrypto;
+import com.vestrel00.ssc.client.interf.SSCCryptoPrivate;
 
 /**
  * Simple asymmetric crypto using AES in CBC mode.
@@ -21,12 +19,11 @@ import com.vestrel00.ssc.client.interf.SSCCrypto;
  * @author Estrellado, Vandolf
  * 
  */
-public class SSCCryptoAES implements SSCCrypto {
+public class SSCCryptoAES implements SSCCryptoPrivate {
 
-	private SSCClient client;
 	private Cipher cipher;
 	private SecretKeySpec spec;
-	private byte[] key, confirmCode;
+	private byte[] key, confirmCode, iv;
 
 	/**
 	 * Create the crypto instance. All parameters must be the same as the
@@ -41,11 +38,10 @@ public class SSCCryptoAES implements SSCCrypto {
 	 * 
 	 * @throws InvalidKeyLengthException
 	 */
-	public SSCCryptoAES(SSCClient client, byte[] key, byte[] confirmCode)
+	public SSCCryptoAES(byte[] key, byte[] confirmCode)
 			throws IllegalArgumentException {
 		if (key.length != 16)
 			throw new IllegalArgumentException("length of key must = 16");
-		this.client = client;
 		this.key = key;
 		this.confirmCode = confirmCode;
 	}
@@ -56,20 +52,7 @@ public class SSCCryptoAES implements SSCCrypto {
 			cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
 			spec = new SecretKeySpec(key, "AES");
 			cipher.init(Cipher.ENCRYPT_MODE, spec);
-			byte[] iv = cipher.getIV();
-			try {
-				// send iv to client partner
-				SSCStreamManager.sendBytes(
-						client.getSender().getOutputStream(), iv);
-				// wait for confirmCode
-				SSCStreamManager.readBytes(client.getSender().getInputStream());
-			} catch (IOException e) {
-				try {
-					client.finish();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
+			iv = cipher.getIV();
 			return cipher.doFinal(message);
 		} catch (NoSuchAlgorithmException | NoSuchPaddingException
 				| InvalidKeyException | IllegalBlockSizeException
@@ -97,6 +80,11 @@ public class SSCCryptoAES implements SSCCrypto {
 	@Override
 	public byte[] getConfirmCode() {
 		return confirmCode;
+	}
+
+	@Override
+	public byte[] getIv() {
+		return iv;
 	}
 
 }

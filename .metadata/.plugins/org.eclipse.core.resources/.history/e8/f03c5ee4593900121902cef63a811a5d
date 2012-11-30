@@ -1,0 +1,7 @@
+package com.vestrel00.ssc.server.shared;
+
+import com.vestrel00.ssc.server.interf.SSCCrypto;
+
+public class SSCCryptoRSA implements SSCCrypto{
+
+}

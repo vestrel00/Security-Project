@@ -16,6 +16,7 @@ import com.vestrel00.ssc.server.interf.SSCServer;
 import com.vestrel00.ssc.server.interf.SSCServerService;
 import com.vestrel00.ssc.server.shared.SSCSettings;
 import com.vestrel00.ssc.server.shared.SSCStreamManager;
+import com.vestrel00.ssc.server.shared.SSCStringMethods;
 
 /**
  * An implementation of an SSCServer.
@@ -79,7 +80,7 @@ public class SSCServerStandard implements SSCServer {
 				for (int i = 0; i < size; i++)
 					clientServices.get(0).stopService(true);
 			} catch (IndexOutOfBoundsException e) {
-				// tis might arise due to multi-threading
+				// this might arise due to multi threading
 			}
 
 			SSCServerDB.finish();

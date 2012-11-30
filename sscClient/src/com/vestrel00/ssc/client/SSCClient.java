@@ -10,7 +10,7 @@ import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import com.vestrel00.ssc.client.interf.SSCCrypto;
+import com.vestrel00.ssc.client.interf.SSCCryptoPrivate;
 import com.vestrel00.ssc.client.interf.SSCProtocol;
 import com.vestrel00.ssc.client.protocols.SSCClientMessageSender;
 import com.vestrel00.ssc.client.protocols.SSCClientMessageReceiver;
@@ -36,7 +36,7 @@ public class SSCClient {
 	private SSCClientBuffer buffer;
 	private SSCProtocol receiver;
 	private SSCClientMessageSender sender;
-	private SSCCrypto crypt;
+	private SSCCryptoPrivate crypt;
 	private boolean isRunning, isInChat;
 	private String host, username, partnerName;
 	private int port;
@@ -105,11 +105,7 @@ public class SSCClient {
 	public void closeIO() throws IOException {
 		out.close();
 		in.close();
-		if (userIn != null)
-			userIn.close();
-		out = null;
-		in = null;
-		userIn = null;
+		userIn.close();
 	}
 
 	/**
@@ -222,20 +218,14 @@ public class SSCClient {
 	 * 
 	 */
 	public void start() throws IOException, NoSuchAlgorithmException {
-		if (!login()) {
-			System.out.println("Failed to login. Exiting system...");
-			System.exit(1);
-		}
 		try {
+			if (!login()) {
+				System.out.println("Failed to login. Exiting system...");
+				finish();
+			}
 			option();
 		} catch (IOException | IndexOutOfBoundsException e) {
 			finish();
-		}
-
-		// this thread will remain listening for incoming service inputs
-		while (isRunning) {
-			if (!receiver.work())
-				finish();
 		}
 	}
 
@@ -247,11 +237,11 @@ public class SSCClient {
 	// TODO wrap with RSA
 	private void option() throws IOException {
 		String choice;
-		boolean retry = true;
-		while (retry) {
+		// infinite loop. Exit option within loop
+		while (true) {
 			System.out.println("What do you want to do?");
 			System.out
-					.println("(checkFriendsList | checkInvites | sendInvites | connect)");
+					.println("(checkFriendsList | checkInvites | sendInvites | connect | exit)");
 			choice = userIn.readLine();
 			SSCStreamManager.sendBytes(out, choice.getBytes());
 			if (choice.contentEquals("checkFriendsList"))
@@ -262,7 +252,14 @@ public class SSCClient {
 				sendInvites();
 			else if (choice.contentEquals("connect")) {
 				connect();
-				retry = false;
+				// this thread will remain listening for incoming service inputs
+				while (isRunning) {
+					if (!receiver.work())
+						finish();
+				}
+			} else if (choice.contentEquals("exit")) {
+				System.out.println("Goodbye.");
+				finish();
 			} else
 				System.out.println("Unknown command " + choice);
 		}
@@ -278,8 +275,33 @@ public class SSCClient {
 
 	}
 
-	private void sendInvites() {
-		// TODO Auto-generated method stub
+	/**
+	 * Perform the protocol with the server.
+	 * 
+	 * @throws IOException
+	 */
+	private void sendInvites() throws IOException {
+		// wait for user input
+		System.out
+				.println("Enter the username you wish to invite to your friend list.");
+		String name = userIn.readLine();
+		SSCStreamManager.sendBytes(out, name.getBytes());
+		// wait for resultCode (0 = added, 1 = already friends, 2 = invite sent,
+		// 3 = already sent invite, -1 = not exist/blocked
+		int resultCode = Integer.parseInt(new String(SSCStreamManager
+				.readBytes(in)));
+		switch (resultCode) {
+		case 0:
+			System.out.println(name + " has been sent");
+			break;
+		case 1:
+
+			break;
+		default:
+			System.out.println(name
+					+ " does not exist or does not want to be your friend.");
+			break;
+		}
 
 	}
 
@@ -328,7 +350,7 @@ public class SSCClient {
 		SSCStreamManager.sendBytes(out, "ok".getBytes());
 		// wait for confirmCode
 		byte[] confirmCode = SSCStreamManager.readBytes(in);
-		crypt = new SSCCryptoAES(this, secretKey, confirmCode);
+		crypt = new SSCCryptoAES(secretKey, confirmCode);
 		receiver = new SSCClientMessageReceiver(this, crypt);
 	}
 

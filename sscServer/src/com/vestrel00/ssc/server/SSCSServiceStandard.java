@@ -7,7 +7,7 @@ import java.security.SecureRandom;
 
 import com.vestrel00.ssc.server.datatypes.SSCPendingClient;
 import com.vestrel00.ssc.server.datatypes.SSCServerClient;
-import com.vestrel00.ssc.server.interf.SSCCrypto;
+import com.vestrel00.ssc.server.interf.SSCCryptoPrivate;
 import com.vestrel00.ssc.server.interf.SSCServer;
 import com.vestrel00.ssc.server.interf.SSCServerService;
 import com.vestrel00.ssc.server.protocols.SSCServerMessageReceiver;
@@ -15,6 +15,7 @@ import com.vestrel00.ssc.server.protocols.SSCServerMessageSender;
 import com.vestrel00.ssc.server.shared.SSCByteMethods;
 import com.vestrel00.ssc.server.shared.SSCCryptoAES;
 import com.vestrel00.ssc.server.shared.SSCStreamManager;
+import com.vestrel00.ssc.server.shared.SSCStringMethods;
 
 /**
  * An implementation of the SSCServerService that uses RSA to secure initial
@@ -26,14 +27,16 @@ import com.vestrel00.ssc.server.shared.SSCStreamManager;
  */
 public class SSCSServiceStandard implements SSCServerService {
 
+	private static final String comma = ",";
 	private SSCServerMessageSender sender;
 	private SSCServerMessageReceiver receiver;
-	private SSCCrypto crypt;
+	private SSCCryptoPrivate crypt;
 	private SSCServer serverClass;
 	private SSCServerService clientPartnerService;
 	private boolean inService, isConnected, isInChat;
 	private SecureRandom rand;
 	private SSCServerClient client;
+	private SSCStringMethods methods;
 
 	/**
 	 * Need the following to be field members so other service objects have
@@ -54,6 +57,7 @@ public class SSCSServiceStandard implements SSCServerService {
 		this.client = client;
 		inService = true;
 		rand = new SecureRandom();
+		methods = new SSCStringMethods();
 	}
 
 	/**
@@ -218,12 +222,6 @@ public class SSCSServiceStandard implements SSCServerService {
 		} catch (IOException e) {
 			stopService(true);
 		}
-
-		// isOutputShutdown checks if client is still able to write to us
-		while (inService && !client.getSocket().isOutputShutdown()) {
-			if (sender != null && !sender.work())
-				stopService(true);
-		}
 	}
 
 	/**
@@ -234,8 +232,8 @@ public class SSCSServiceStandard implements SSCServerService {
 	// TODO wrap with RSA
 	private void option() throws IOException {
 		String choice;
-		boolean retry = true;
-		while (retry) {
+		// infinite loop. Exit within loop.
+		while (true) {
 			choice = new String(SSCStreamManager.readBytes(client
 					.getInputStream()));
 
@@ -247,7 +245,13 @@ public class SSCSServiceStandard implements SSCServerService {
 				sendInvites();
 			else if (choice.contentEquals("connect")) {
 				connect();
-				retry = false;
+				// isOutputShutdown checks if client is still able to write us
+				while (inService && !client.getSocket().isOutputShutdown()) {
+					if (sender != null && !sender.work())
+						stopService(true);
+				}
+			} else if (choice.contentEquals("exit")) {
+				stopService(true);
 			}
 		}
 	}
@@ -262,9 +266,70 @@ public class SSCSServiceStandard implements SSCServerService {
 
 	}
 
-	private void sendInvites() {
-		// TODO Auto-generated method stub
+	/**
+	 * 
+	 * Perform the protocol with the client
+	 * 
+	 * @throws IOException
+	 */
+	private void sendInvites() throws IOException {
+		// wait for name
+		String name = new String(SSCStreamManager.readBytes(client
+				.getInputStream()));
+		// check db if name exist
+		if (!SSCServerDB.userExists(name)) {
+			SSCStreamManager.sendBytes(client.getOutputStream(),
+					"-1".getBytes());
+			return;
+		}
 
+		// check db if our client is already friends with the client with the
+		// given name
+		String friendList = SSCServerDB.getFriendList(client.getName());
+		if (methods.isInList(friendList, name)) {
+			SSCStreamManager
+					.sendBytes(client.getOutputStream(), "1".getBytes());
+			return;
+		}
+
+		// check if our client already has sent an invite
+		String sentList = SSCServerDB.getSentInvites(client.getName());
+		if (methods.isInList(sentList, name)) {
+			SSCStreamManager
+					.sendBytes(client.getOutputStream(), "3".getBytes());
+			return;
+		}
+
+		// check db if user with given name is blocking our client
+		String blockList = SSCServerDB.getBlockList(name);
+		if (methods.isInList(blockList, client.getName())) {
+			SSCStreamManager
+					.sendBytes(client.getOutputStream(), "-1".getBytes());
+			return;
+		}
+
+		// TODO make update -> remove
+		// check if the other client also sent an invite to our client and
+		// its invite is in our client's received invites
+		String receivedInvites = SSCServerDB.getReceivedInvites(client
+				.getName());
+		if (methods.isInList(receivedInvites, name)) {
+			receivedInvites = methods.removeFromList(receivedInvites, name);
+			// remove our client's received invite
+			SSCServerDB
+					.updateReceivedInvites(client.getName(), receivedInvites);
+			// remove the sender's invite
+			String otherSentInvites = methods.removeFromList(
+					SSCServerDB.getSentInvites(name), client.getName());
+			SSCServerDB.updateSentInvites(name, otherSentInvites);
+			// add to friends list for both clients
+			SSCServerDB.insertFriend(client, newFriend)
+			
+			SSCStreamManager
+					.sendBytes(client.getOutputStream(), "0".getBytes());
+		} else {
+			
+		}
 	}
 
 	/**

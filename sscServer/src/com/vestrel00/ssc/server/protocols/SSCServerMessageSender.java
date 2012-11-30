@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.vestrel00.ssc.server.shared.SSCStreamManager;
-import com.vestrel00.ssc.server.interf.SSCCrypto;
+import com.vestrel00.ssc.server.interf.SSCCryptoPrivate;
 import com.vestrel00.ssc.server.interf.SSCProtocol;
 import com.vestrel00.ssc.server.interf.SSCServerService;
 
@@ -21,7 +21,7 @@ import com.vestrel00.ssc.server.interf.SSCServerService;
 public class SSCServerMessageSender implements SSCProtocol {
 
 	private SSCServerService service;
-	private SSCCrypto crypt;
+	private SSCCryptoPrivate crypt;
 	private boolean isWorking;
 	private List<byte[]> pendingEM, pendingHM, pendingIV;
 
@@ -33,7 +33,8 @@ public class SSCServerMessageSender implements SSCProtocol {
 	 * @param crypt
 	 *            the crypto that will be used.
 	 */
-	public SSCServerMessageSender(SSCServerService service, SSCCrypto crypt) {
+	public SSCServerMessageSender(SSCServerService service,
+			SSCCryptoPrivate crypt) {
 		this.service = service;
 		this.crypt = crypt;
 		isWorking = true;
@@ -84,8 +85,8 @@ public class SSCServerMessageSender implements SSCProtocol {
 					System.out.println(service.getClient().getName()
 							+ "Sender: waiting for client E(confirmCode)");
 				// wait for client confirmCode
-				resultCode = SSCStreamManager.readBytes(service
-						.getClient().getInputStream());
+				resultCode = SSCStreamManager.readBytes(service.getClient()
+						.getInputStream());
 
 				boolean confirmed = true;
 				for (int i = 0; i < resultCode.length; i++)

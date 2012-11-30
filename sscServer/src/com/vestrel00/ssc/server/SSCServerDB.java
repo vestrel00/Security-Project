@@ -1,18 +1,18 @@
 package com.vestrel00.ssc.server;
 
 import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 /**
  * Database used by the server to store user info using
  * org.apache.derby.jdbc.ClientDriver. This same server is used even of there
- * are multiple servers running! <br>
+ * are multiple servers running! Note that <b>order of the sql method calls
+ * MATTER!</b><br>
  * <b>User info:</b>
  * <ol>
  * <li>username</li>
@@ -66,8 +66,9 @@ public class SSCServerDB {
 	}
 
 	/**
-	 * Create a new user. <b> Uses default system encoding which should be
-	 * UTF-8. Meaning 1 byte = 1 char!</b>
+	 * Create a new user in the CLIENTS table and an empty friend list in the
+	 * FRIENDS table. <b> Uses default system encoding which should be UTF-8.
+	 * Meaning 1 byte = 1 char!</b>
 	 * 
 	 * @param name
 	 *            of the client
@@ -99,12 +100,62 @@ public class SSCServerDB {
 			ps.setBlob(3, hashedPassBlob);
 			ps.execute();
 			ps.close();
+
+			// create insert self into FRIENDS table
+			// get id first
+			int id = getId(name);
+			Clob friendsClob = conn.createClob();
+			Clob enemiesClob = conn.createClob();
+			Clob sentClob = conn.createClob();
+			Clob receivedClob = conn.createClob();
+			friendsClob.setString(1, "");
+			enemiesClob.setString(1, "");
+			sentClob.setString(1, "");
+			receivedClob.setString(1, "");
+			ps = conn.prepareStatement("INSERT INTO " + FRIENDS
+					+ " VALUES (?, ?, ?, ?, ?)");
+			ps.setInt(1, id);
+			ps.setAsciiStream(2, friendsClob.getAsciiStream());
+			ps.setAsciiStream(3, enemiesClob.getAsciiStream());
+			ps.setAsciiStream(4, sentClob.getAsciiStream());
+			ps.setAsciiStream(5, receivedClob.getAsciiStream());
+			ps.execute();
+			ps.close();
+			friendsClob.free();
+			enemiesClob.free();
+			sentClob.free();
+			receivedClob.free();
+
+			// need these here to avoid exception
 			saltBlob.free();
 			hashedPassBlob.free();
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return true;
+	}
+
+	/**
+	 * 
+	 * @return the id of the user with the given name. Returns -1 if user does
+	 *         not exist.
+	 */
+	public static int getId(String name) {
+		try {
+			PreparedStatement ps = conn.prepareStatement("SELECT id FROM "
+					+ CLIENTS + " WHERE name = ?");
+			ps.setString(1, name);
+			ps.executeQuery();
+			ResultSet result = ps.getResultSet();
+			result.next();
+			int id = result.getInt(1);
+			ps.close();
+			return id;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return -1;
+		}
 	}
 
 	/**
@@ -116,12 +167,7 @@ public class SSCServerDB {
 			PreparedStatement st = conn.prepareStatement("SELECT name FROM "
 					+ CLIENTS + " WHERE name = ?");
 			st.setString(1, name);
-			ResultSet result = st.executeQuery();
-			if (result.next()) 
-				return true;
-
-			st.close();
-			return false;
+			return st.executeQuery().next();
 		} catch (SQLException e) {
 			return false;
 		}
@@ -142,8 +188,10 @@ public class SSCServerDB {
 			Blob salt = result.getBlob(1);
 			byte[] saltArr = salt.getBytes(1, (int) salt.length());
 			st.close();
+			salt.free();
 			return saltArr;
 		} catch (SQLException e) {
+			e.printStackTrace();
 			return null;
 		}
 	}
@@ -164,10 +212,176 @@ public class SSCServerDB {
 			Blob hashedPass = result.getBlob(1);
 			byte[] hpArr = hashedPass.getBytes(1, (int) hashedPass.length());
 			st.close();
+			hashedPass.free();
 			return hpArr;
 		} catch (SQLException e) {
+			e.printStackTrace();
 			return null;
 		}
+	}
+
+	/**
+	 * Removes the strToRemove from the user with the given name in the listType
+	 * in the FRIENDS table.
+	 */
+	private static void removeFromList(String listType, String name,
+			String strToRemove) {
+		// TODO
+	}
+
+	/**
+	 * @return true if insertion is successful
+	 */
+	public static boolean insertSentInvite(String name, String newSentInvite) {
+		return insertToList("sentInvites", name, newSentInvite);
+	}
+
+	/**
+	 * @return true if insertion is successful
+	 */
+	public static boolean insertReceivedInvite(String name,
+			String newReceivedInvite) {
+		return insertToList("receivedInvites", name, newReceivedInvite);
+	}
+
+	/**
+	 * 
+	 * @return true if insertion is successful
+	 */
+	public static boolean insertEnemy(String name, String newEnemy) {
+		return insertToList("enemies", name, newEnemy);
+	}
+
+	/**
+	 * @return true if insertion is successful
+	 */
+	public static boolean insertFriend(String name, String newFriend) {
+		return insertToList("friends", name, newFriend);
+	}
+
+	/**
+	 * This calls {@link #getFriendList(String)} and appends the given name to
+	 * that list and stores it back.
+	 * 
+	 * @return true if successfully inserted the given strToInsert to the list
+	 *         of listType of the given user with the given name in the FRIENDS
+	 *         table
+	 */
+	private static boolean insertToList(String listType, String name,
+			String strToInsert) {
+		try {
+			String list = getFriendList(name);
+			list += strToInsert + ",";
+			int id = getId(name);
+			Clob newList = conn.createClob();
+			newList.setString(1, list);
+			PreparedStatement ps = conn.prepareStatement("UPDATE " + FRIENDS
+					+ " set " + listType + " = ? WHERE id = ?");
+			ps.setAsciiStream(1, newList.getAsciiStream());
+			ps.setInt(2, id);
+			ps.execute();
+			ps.close();
+			newList.free();
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+	}
+
+	/**
+	 * 
+	 * @return the list of friends stored in the clob in the FRIENDS table as
+	 *         <name>,<name>,...
+	 */
+	public static String getFriendList(String name) {
+		return getList("friends", name);
+	}
+
+	/**
+	 * 
+	 * @return the list sent invites stored in the clob in the FRIENDS table as
+	 *         <name>,<name>,...
+	 */
+	public static String getSentInvites(String name) {
+		return getList("sentInvites", name);
+	}
+
+	/**
+	 * 
+	 * @return the list received invites stored in the clob in the FRIENDS table
+	 *         as <name>,<name>,...
+	 */
+	public static String getReceivedInvites(String name) {
+		return getList("receivedInvites", name);
+	}
+
+	/**
+	 * 
+	 * @return the list of received invites stored in the clob in the FRIENDS
+	 *         table as <name>,<name>,...
+	 */
+	public static String getBlockList(String name) {
+		return getList("enemies", name);
+	}
+
+	/**
+	 * Replaces the received invites list of the given user.
+	 */
+	public static void updateReceivedInvites(String name, String list) {
+		updateList("receivedInvites", list, name);
+	}
+
+	/**
+	 * Replaces the sent invites list of the given user
+	 */
+	public static void updateSentInvites(String name, String list) {
+		updateList("sentInvites", list, name);
+	}
+
+	/**
+	 * Replaces the list of listType in the FRIENDS table of the given user name
+	 */
+	private static void updateList(String listType, String list, String name) {
+		try {
+			int id = getId(name);
+			Clob listClob = conn.createClob();
+			listClob.setString(1, list);
+			PreparedStatement ps = conn.prepareStatement("UPDATE " + FRIENDS
+					+ " SET " + listType + " = ? WHERE id = ?");
+			ps.setAsciiStream(1, listClob.getAsciiStream());
+			ps.setInt(2, id);
+			ps.execute();
+			ps.close();
+			listClob.free();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * @return the chosen list of the user with the given name.
+	 */
+	private static String getList(String listType, String name) {
+		String list = null;
+
+		try {
+			PreparedStatement ps = conn.prepareStatement("SELECT " + listType
+					+ " from " + FRIENDS + ", " + CLIENTS + " WHERE " + CLIENTS
+					+ ".id = " + FRIENDS + ".id AND " + CLIENTS + ".name = ?");
+			ps.setString(1, name);
+			ResultSet result = ps.executeQuery();
+			result.next();
+			Clob lst = result.getClob(1);
+			list = lst.getSubString(1, (int) lst.length());
+			lst.free();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return list;
+
 	}
 
 	/**
@@ -181,30 +395,34 @@ public class SSCServerDB {
 	 * @throws SQLException
 	 */
 	private static void create() throws SQLException {
-		Statement st = conn.createStatement();
+		PreparedStatement ps = conn
+				.prepareStatement("CREATE TABLE "
+						+ CLIENTS
+						+ " (id INT NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), "
+						+ "name VARCHAR(50) NOT NULL, " + "salt BLOB(8), "
+						+ "hashedPass BLOB(20), PRIMARY KEY(id))");
 		// CLIENTS
 		try {
-			st.executeUpdate("CREATE TABLE "
-					+ CLIENTS
-					+ " (id INT NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), "
-					+ "name VARCHAR(50) NOT NULL, " + "salt BLOB(8), "
-					+ "hashedPass BLOB(20), PRIMARY KEY(id, name))");
+			ps.execute();
 		} catch (SQLException e) {
 			// DB already created
+		} finally {
+			ps.close();
 		}
-		st.close();
 
 		// FRIENDS
-		st = conn.createStatement();
+		ps = conn
+				.prepareStatement("CREATE TABLE "
+						+ FRIENDS
+						+ " (id INT NOT NULL PRIMARY KEY, "
+						+ "friends CLOB, enemies CLOB, sentInvites CLOB, receivedInvites CLOB, "
+						+ "FOREIGN KEY (id) REFERENCES " + CLIENTS + "(id))");
 		try {
-			st.executeUpdate("CREATE TABLE " + FRIENDS
-					+ " (id INT PRIMARY KEY, "
-					+ "friends CLOB, sentInvites CLOB, receivedInvites CLOB, "
-					+ "FOREIGN KEY (id) REFERENCES " + CLIENTS + "(id))");
+			ps.execute();
 		} catch (SQLException e) {
 			// DB already created
+		} finally {
+			ps.close();
 		}
-		st.close();
 	}
-
 }

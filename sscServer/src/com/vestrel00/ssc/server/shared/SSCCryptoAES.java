@@ -11,19 +11,19 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.vestrel00.ssc.server.interf.SSCCrypto;
+import com.vestrel00.ssc.server.interf.SSCCryptoPrivate;
 
 /**
- * Simple asymmetric crypto using AES in CBC mode
+ * Simple asymmetric crypto using AES in CBC mode.
  * 
  * @author Estrellado, Vandolf
  * 
  */
-public class SSCCryptoAES implements SSCCrypto {
+public class SSCCryptoAES implements SSCCryptoPrivate {
 
 	private Cipher cipher;
 	private SecretKeySpec spec;
-	private byte[] key, confirmCode;
+	private byte[] key, confirmCode, iv;
 
 	/**
 	 * Create the crypto instance. All parameters must be the same as the
@@ -47,6 +47,22 @@ public class SSCCryptoAES implements SSCCrypto {
 	}
 
 	@Override
+	public byte[] encrypt(byte[] message) {
+		try {
+			cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+			spec = new SecretKeySpec(key, "AES");
+			cipher.init(Cipher.ENCRYPT_MODE, spec);
+			iv = cipher.getIV();
+			return cipher.doFinal(message);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException
+				| InvalidKeyException | IllegalBlockSizeException
+				| BadPaddingException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	@Override
 	public byte[] decrypt(byte[] message, byte[] iv) {
 		try {
 			cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
@@ -64,6 +80,11 @@ public class SSCCryptoAES implements SSCCrypto {
 	@Override
 	public byte[] getConfirmCode() {
 		return confirmCode;
+	}
+
+	@Override
+	public byte[] getIv() {
+		return iv;
 	}
 
 }

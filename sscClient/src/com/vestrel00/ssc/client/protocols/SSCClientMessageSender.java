@@ -8,9 +8,10 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 
 import com.vestrel00.ssc.client.SSCClient;
-import com.vestrel00.ssc.client.interf.SSCCrypto;
+import com.vestrel00.ssc.client.interf.SSCCryptoPrivate;
 import com.vestrel00.ssc.client.shared.SSCByteMethods;
 import com.vestrel00.ssc.client.shared.SSCStreamManager;
 
@@ -28,7 +29,7 @@ import com.vestrel00.ssc.client.shared.SSCStreamManager;
 public class SSCClientMessageSender implements Runnable {
 
 	private SSCClient client;
-	private SSCCrypto crypt;
+	private SSCCryptoPrivate crypt;
 	private String userStr;
 	private BufferedReader userIn;
 	private DataOutputStream out;
@@ -36,7 +37,7 @@ public class SSCClientMessageSender implements Runnable {
 	private Socket socket;
 
 	public SSCClientMessageSender(SSCClient client, Socket socket,
-			SSCCrypto crypt) {
+			SSCCryptoPrivate crypt) {
 		this.client = client;
 		this.socket = socket;
 		this.crypt = crypt;
@@ -86,9 +87,11 @@ public class SSCClientMessageSender implements Runnable {
 			e1.printStackTrace();
 		}
 
+		byte[] resultCode;
 		try {
 			// wait for user input
 			while ((userStr = userIn.readLine()) != null && client.isRunning()) {
+				resultCode = null;
 				mStr = client.getUserName() + " : " + userStr;
 				client.getBuffer().add(mStr);
 				// System.out.println(client.getUserName()
@@ -96,20 +99,30 @@ public class SSCClientMessageSender implements Runnable {
 				// send E(m)
 				SSCStreamManager.sendBytes(out, crypt.encrypt(mStr.getBytes()));
 
+				// wait for confirmCode
+				SSCStreamManager.readBytes(client.getSender().getInputStream());
+
 				// System.out.println(client.getUserName()
-				// + "Sender: waiting for confirmCode");
-				// wait for server confirmCode
-				byte[] resultCode = SSCStreamManager.readBytes(in);
+				// + "Sender: sending iv");
+				try {
+					// send iv to client partner
+					SSCStreamManager.sendBytes(client.getSender()
+							.getOutputStream(), crypt.getIv());
 
-				boolean confirmed = SSCByteMethods.equal(
-						crypt.getConfirmCode(), resultCode);
-				for (int i = 0; i < resultCode.length; i++)
-					if (resultCode[i] != crypt.getConfirmCode()[i]) {
-						confirmed = false;
-						break;
+					// System.out.println(client.getUserName()
+					// + "Sender: waiting for confirmCode");
+					// wait for confirmCode
+					resultCode = SSCStreamManager.readBytes(client.getSender()
+							.getInputStream());
+				} catch (IOException e) {
+					try {
+						client.finish();
+					} catch (IOException e1) {
+						e1.printStackTrace();
 					}
+				}
 
-				if (confirmed) {
+				if (SSCByteMethods.equal(crypt.getConfirmCode(), resultCode)) {
 					// System.out.println(client.getUserName()
 					// + "Sender: sending H(m)");
 					// send H(m)
@@ -118,8 +131,16 @@ public class SSCClientMessageSender implements Runnable {
 							MessageDigest.getInstance("SHA-1").digest(
 									mStr.getBytes()));
 				} else {
+					// send dummy H(m)
+					SSCStreamManager.sendBytes(
+							out,
+							MessageDigest.getInstance("SHA-1").digest(
+									String.valueOf(
+											new SecureRandom().nextInt(9999))
+											.getBytes()));
 					System.out
-							.println("Warning! Connection may be compromised.");
+							.println("Warning! Connection may be compromised.\n"
+									+ "Message not sent.");
 				}
 			}
 		} catch (IOException | NoSuchAlgorithmException e) {

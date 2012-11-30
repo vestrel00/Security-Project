@@ -1,0 +1,12 @@
+package com.vestrel00.ssc.server.shared;
+
+public class SSCStringMethods {
+	
+	/**
+	 * @return true if the given name is in the list.
+	 */
+	public static boolean isInList(String list, String name){
+		
+	}
+
+}

@@ -1,6 +1,6 @@
 ----------------------------------------------------------------
-Tue Nov 27 20:18:14 EST 2012:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.9.1.0 - (1344872): instance a816c00e-013b-4497-c11e-0000023cf180 
+Thu Nov 29 11:30:21 EST 2012:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.9.1.0 - (1344872): instance a816c00e-013b-4d01-2f61-0000023d3ca0 
 on database directory /home/vestrel00/Projects/480Proj/sscServer/SSCServerDB  with class loader sun.misc.Launcher$AppClassLoader@1a2264c 
 Loaded from file:/home/vestrel00/ProgLibs/derby.jar
 java.vendor=Oracle Corporation
