@@ -368,7 +368,7 @@ public class SSCServerDB {
 
 		try {
 			PreparedStatement ps = conn.prepareStatement("SELECT " + listType
-					+ " FROM " + FRIENDS + ", " + CLIENTS + " WHERE " + CLIENTS
+					+ " from " + FRIENDS + ", " + CLIENTS + " WHERE " + CLIENTS
 					+ ".id = " + FRIENDS + ".id AND " + CLIENTS + ".name = ?");
 			ps.setString(1, name);
 			ResultSet result = ps.executeQuery();

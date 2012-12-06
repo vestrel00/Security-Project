@@ -260,6 +260,37 @@ public class SSCServerDB {
 	}
 
 	/**
+	 * This calls {@link #getFriendList(String)} and appends the given name to
+	 * that list and stores it back.
+	 * 
+	 * @return true if successfully inserted the given strToInsert to the list
+	 *         of listType of the given user with the given name in the FRIENDS
+	 *         table
+	 */
+	private static boolean insertToList(String listType, String name,
+			String strToInsert) {
+		try {
+			String list = getFriendList(name);
+			list += strToInsert + ",";
+			int id = getId(name);
+			Clob newList = conn.createClob();
+			newList.setString(1, list);
+			PreparedStatement ps = conn.prepareStatement("UPDATE " + FRIENDS
+					+ " set " + listType + " = ? WHERE id = ?");
+			ps.setAsciiStream(1, newList.getAsciiStream());
+			ps.setInt(2, id);
+			ps.execute();
+			ps.close();
+			newList.free();
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+	}
+
+	/**
 	 * 
 	 * @return the list of friends stored in the clob in the FRIENDS table as
 	 *         <name>,<name>,...
@@ -330,37 +361,6 @@ public class SSCServerDB {
 	}
 
 	/**
-	 * This calls {@link #getFriendList(String)} and appends the given name to
-	 * that list and stores it back.
-	 * 
-	 * @return true if successfully inserted the given strToInsert to the list
-	 *         of listType of the given user with the given name in the FRIENDS
-	 *         table
-	 */
-	private static boolean insertToList(String listType, String name,
-			String strToInsert) {
-		try {
-			String list = getFriendList(name);
-			list += strToInsert + ",";
-			int id = getId(name);
-			Clob newList = conn.createClob();
-			newList.setString(1, list);
-			PreparedStatement ps = conn.prepareStatement("UPDATE " + FRIENDS
-					+ " SET " + listType + " = ? WHERE id = ?");
-			ps.setAsciiStream(1, newList.getAsciiStream());
-			ps.setInt(2, id);
-			ps.execute();
-			ps.close();
-			newList.free();
-			return true;
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return false;
-		}
-
-	}
-
-	/**
 	 * @return the chosen list of the user with the given name.
 	 */
 	private static String getList(String listType, String name) {
@@ -368,7 +368,7 @@ public class SSCServerDB {
 
 		try {
 			PreparedStatement ps = conn.prepareStatement("SELECT " + listType
-					+ " FROM " + FRIENDS + ", " + CLIENTS + " WHERE " + CLIENTS
+					+ " from " + FRIENDS + ", " + CLIENTS + " WHERE " + CLIENTS
 					+ ".id = " + FRIENDS + ".id AND " + CLIENTS + ".name = ?");
 			ps.setString(1, name);
 			ResultSet result = ps.executeQuery();
