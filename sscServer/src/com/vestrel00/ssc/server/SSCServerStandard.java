@@ -16,7 +16,6 @@ import com.vestrel00.ssc.server.interf.SSCServer;
 import com.vestrel00.ssc.server.interf.SSCServerService;
 import com.vestrel00.ssc.server.shared.SSCSettings;
 import com.vestrel00.ssc.server.shared.SSCStreamManager;
-import com.vestrel00.ssc.server.shared.SSCStringMethods;
 
 /**
  * An implementation of an SSCServer.

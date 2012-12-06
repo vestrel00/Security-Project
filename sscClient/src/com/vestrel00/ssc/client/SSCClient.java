@@ -41,6 +41,17 @@ public class SSCClient {
 	private String host, username, partnerName;
 	private int port;
 
+	private static final String option = "What do you want to do?\n"
+			+ "friends  : print the names of all your friends\n"
+			+ "enemies  : print the names of all your enemies\n"
+			+ "sent     : print the names of everyone you sent an invite to\n"
+			+ "received : print the names of everyone that sent you an invite\n"
+			+ "send     : send an invite\n" + "block    : block a user\n"
+			+ "accept   : accept a received invite\n"
+			+ "reject   : reject a received invite\n"
+			+ "connect  : chat with one of your friends\n"
+			+ "exit     : quit the program\n" + "help     : print this menu";
+
 	/**
 	 * Constructor.
 	 */
@@ -222,8 +233,8 @@ public class SSCClient {
 			if (!login()) {
 				System.out.println("Failed to login. Exiting system...");
 				finish();
-			}
-			option();
+			} else
+				option();
 		} catch (IOException | IndexOutOfBoundsException e) {
 			finish();
 		}
@@ -237,19 +248,27 @@ public class SSCClient {
 	// TODO wrap with RSA
 	private void option() throws IOException {
 		String choice;
+		System.out.println(option);
 		// infinite loop. Exit option within loop
 		while (true) {
-			System.out.println("What do you want to do?");
-			System.out
-					.println("(checkFriendsList | checkInvites | sendInvites | connect | exit)");
 			choice = userIn.readLine();
 			SSCStreamManager.sendBytes(out, choice.getBytes());
-			if (choice.contentEquals("checkFriendsList"))
-				checkFriends();
-			else if (choice.contentEquals("checkInvites"))
-				checkInvites();
-			else if (choice.contentEquals("sendInvites"))
+			if (choice.contentEquals("friends"))
+				System.out.println(new String(SSCStreamManager.readBytes(in)));
+			else if (choice.contentEquals("enemies"))
+				System.out.println(new String(SSCStreamManager.readBytes(in)));
+			else if (choice.contentEquals("sent"))
+				System.out.println(new String(SSCStreamManager.readBytes(in)));
+			else if (choice.contentEquals("received"))
+				System.out.println(new String(SSCStreamManager.readBytes(in)));
+			else if (choice.contentEquals("send"))
 				sendInvites();
+			else if (choice.contentEquals("block"))
+				blockUser();
+			else if (choice.contentEquals("accept"))
+				acceptInvite();
+			else if (choice.contentEquals("reject"))
+				rejectInvite();
 			else if (choice.contentEquals("connect")) {
 				connect();
 				// this thread will remain listening for incoming service inputs
@@ -260,23 +279,100 @@ public class SSCClient {
 			} else if (choice.contentEquals("exit")) {
 				System.out.println("Goodbye.");
 				finish();
-			} else
+			} else if (choice.contentEquals("help")) {
+				System.out.println(option);
+			} else if (choice.contentEquals(""))
+				System.out.println("Unknown command ");
+			else
 				System.out.println("Unknown command " + choice);
 		}
 	}
 
-	private void checkFriends() {
-		// TODO Auto-generated method stub
-
-	}
-
-	private void checkInvites() {
+	/**
+	 * Perform the blockUser protocol with the server
+	 * 
+	 * @throws IOException
+	 */
+	private void blockUser() {
 		// TODO Auto-generated method stub
 
 	}
 
 	/**
-	 * Perform the protocol with the server.
+	 * Perform the acceptInvite protocol with the server
+	 * 
+	 * @throws IOException
+	 */
+	private void acceptInvite() throws IOException {
+		// wait for the received invites list
+		String lst = new String(SSCStreamManager.readBytes(in));
+		String name = null;
+		int retry = 0;
+		if (!lst.contentEquals("empty")) {
+			System.out.println("Accept who?");
+			System.out.println(lst);
+			// send name to server
+			while (retry < 3) {
+				name = userIn.readLine();
+				if (lst.contains(name)) {
+					SSCStreamManager.sendBytes(out, name.getBytes());
+					System.out.println("Successfully accepted invite from "
+							+ name);
+					System.out.println("You are now friends with " + name);
+					retry = 10;
+				} else {
+					retry++;
+					System.out.println("You have no received invites from "
+							+ name);
+				}
+			}
+			// failed
+			if (retry != 10) {
+				SSCStreamManager.sendBytes(out, "fail".getBytes());
+				System.out.println("Failed to accept any invites");
+			}
+		} else
+			System.out.println("No received invites to accept.");
+	}
+
+	/**
+	 * Perform the rejectInvite protocol with the server
+	 * 
+	 * @throws IOException
+	 */
+	private void rejectInvite() throws IOException {
+		// wait for the received invites list
+		String lst = new String(SSCStreamManager.readBytes(in));
+		String name = null;
+		int retry = 0;
+		if (!lst.contentEquals("empty")) {
+			System.out.println("Reject who?");
+			System.out.println(lst);
+			// send name to server
+			while (retry < 3) {
+				name = userIn.readLine();
+				if (lst.contains(name)) {
+					SSCStreamManager.sendBytes(out, name.getBytes());
+					System.out.println("Successfully rejected invite from "
+							+ name);
+					retry = 10;
+				} else {
+					retry++;
+					System.out.println("You have no received invites from "
+							+ name);
+				}
+			}
+			// failed
+			if (retry != 10) {
+				SSCStreamManager.sendBytes(out, "fail".getBytes());
+				System.out.println("Failed to reject any invites");
+			}
+		} else
+			System.out.println("No received invites to reject.");
+	}
+
+	/**
+	 * Perform the protocol with the server service.
 	 * 
 	 * @throws IOException
 	 */
@@ -292,10 +388,16 @@ public class SSCClient {
 				.readBytes(in)));
 		switch (resultCode) {
 		case 0:
-			System.out.println(name + " has been sent");
+			System.out.println(name + " is now friends with you!");
 			break;
 		case 1:
-
+			System.out.println(name + " is already friends with you.");
+			break;
+		case 2:
+			System.out.println(name + " has been sent an invite.");
+			break;
+		case 3:
+			System.out.println("You already sent an invite to " + name + " .");
 			break;
 		default:
 			System.out.println(name
@@ -331,9 +433,9 @@ public class SSCClient {
 				System.out.println("You are " + partnerName
 						+ ". You may not chat with yourself.");
 			else
-				System.out
-						.println(partnerName
-								+ " is offline or chatting with someone else or does not exist.");
+				System.out.println(partnerName
+						+ " is offline, not your friend, chatting\n"
+						+ "with someone else or does not exist.");
 		}
 	}
 

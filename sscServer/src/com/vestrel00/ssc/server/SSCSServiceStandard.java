@@ -26,8 +26,6 @@ import com.vestrel00.ssc.server.shared.SSCStringMethods;
  * 
  */
 public class SSCSServiceStandard implements SSCServerService {
-
-	private static final String comma = ",";
 	private SSCServerMessageSender sender;
 	private SSCServerMessageReceiver receiver;
 	private SSCCryptoPrivate crypt;
@@ -37,6 +35,7 @@ public class SSCSServiceStandard implements SSCServerService {
 	private SecureRandom rand;
 	private SSCServerClient client;
 	private SSCStringMethods methods;
+	private StringBuilder builder;
 
 	/**
 	 * Need the following to be field members so other service objects have
@@ -58,6 +57,7 @@ public class SSCSServiceStandard implements SSCServerService {
 		inService = true;
 		rand = new SecureRandom();
 		methods = new SSCStringMethods();
+		builder = new StringBuilder();
 	}
 
 	/**
@@ -237,12 +237,53 @@ public class SSCSServiceStandard implements SSCServerService {
 			choice = new String(SSCStreamManager.readBytes(client
 					.getInputStream()));
 
-			if (choice.contentEquals("checkFriendsList"))
-				checkFriends();
-			else if (choice.contentEquals("checkInvites"))
-				checkInvites();
-			else if (choice.contentEquals("sendInvites"))
+			if (choice.contentEquals("friends"))
+				try {
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							SSCServerDB.getFriendList(client.getName())
+									.getBytes());
+				} catch (IndexOutOfBoundsException e) {
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							"You have no friends =(".getBytes());
+				}
+			else if (choice.contentEquals("enemies"))
+				try {
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							SSCServerDB.getEnemyList(client.getName())
+									.getBytes());
+				} catch (IndexOutOfBoundsException e) {
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							"You have no enemies =)".getBytes());
+				}
+			else if (choice.contentEquals("sent"))
+				try {
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							SSCServerDB.getSentInvites(client.getName())
+									.getBytes());
+				} catch (IndexOutOfBoundsException e) {
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							"You do not want to be friends with anyone =("
+									.getBytes());
+				}
+			else if (choice.contentEquals("received"))
+				try {
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							SSCServerDB.getReceivedInvites(client.getName())
+									.getBytes());
+				} catch (IndexOutOfBoundsException e) {
+					SSCStreamManager
+							.sendBytes(client.getOutputStream(),
+									"No one wants to be friends with you =("
+											.getBytes());
+				}
+			else if (choice.contentEquals("send"))
 				sendInvites();
+			else if (choice.contentEquals("block"))
+				blockUser();
+			else if (choice.contentEquals("accept"))
+				acceptInvite();
+			else if (choice.contentEquals("reject"))
+				rejectInvite();
 			else if (choice.contentEquals("connect")) {
 				connect();
 				// isOutputShutdown checks if client is still able to write us
@@ -256,14 +297,75 @@ public class SSCSServiceStandard implements SSCServerService {
 		}
 	}
 
-	private void checkFriends() {
+	/**
+	 * Perform the blockUser protocol with the client
+	 * 
+	 * @throws IOException
+	 */
+	private void blockUser() {
 		// TODO Auto-generated method stub
 
 	}
 
-	private void checkInvites() {
-		// TODO Auto-generated method stub
+	/**
+	 * Perform the acceptInvite protocol with the client
+	 * 
+	 * @throws IOException
+	 */
+	private void acceptInvite() throws IOException {
+		// send received invites list
+		try {
+			SSCStreamManager.sendBytes(client.getOutputStream(), SSCServerDB
+					.getReceivedInvites(client.getName()).getBytes());
+			// throw bounds exception here if empty list
+			// skipping the following lines
+			// wait for response
+			String response = new String(SSCStreamManager.readBytes(client
+					.getInputStream()));
+			if (!response.contentEquals("fail")) {
+				// delete the received invite
+				SSCServerDB.removeFromReceivedInvites(builder,
+						client.getName(), response);
+				// delete the sent invite from the other client
+				SSCServerDB.removeFromSentInvites(builder, response,
+						client.getName());
+				// add both as friends
+				SSCServerDB.insertFriend(client.getName(), response);
+				SSCServerDB.insertFriend(response, client.getName());
+			}
+		} catch (IndexOutOfBoundsException e) {
+			SSCStreamManager.sendBytes(client.getOutputStream(),
+					"empty".getBytes());
+		}
 
+	}
+
+	/**
+	 * Perform the rejectInvite protocol with the client
+	 * 
+	 * @throws IOException
+	 */
+	private void rejectInvite() throws IOException {
+		// send received invites list
+		try {
+			SSCStreamManager.sendBytes(client.getOutputStream(), SSCServerDB
+					.getReceivedInvites(client.getName()).getBytes());
+			// throw bounds exception here if empty list
+			// skipping the following lines
+			// wait for response
+			String response = new String(SSCStreamManager.readBytes(client
+					.getInputStream()));
+			if (!response.contentEquals("fail"))
+				// delete the received invite
+				SSCServerDB.removeFromReceivedInvites(builder,
+						client.getName(), response);
+			// delete the sent invite from the other client
+			SSCServerDB.removeFromSentInvites(builder, response,
+					client.getName());
+		} catch (IndexOutOfBoundsException e) {
+			SSCStreamManager.sendBytes(client.getOutputStream(),
+					"empty".getBytes());
+		}
 	}
 
 	/**
@@ -301,34 +403,32 @@ public class SSCSServiceStandard implements SSCServerService {
 		}
 
 		// check db if user with given name is blocking our client
-		String blockList = SSCServerDB.getBlockList(name);
+		String blockList = SSCServerDB.getEnemyList(name);
 		if (methods.isInList(blockList, client.getName())) {
-			SSCStreamManager
-					.sendBytes(client.getOutputStream(), "-1".getBytes());
+			SSCStreamManager.sendBytes(client.getOutputStream(),
+					"-1".getBytes());
 			return;
 		}
 
-		// TODO make update -> remove
-		// check if the other client also sent an invite to our client and
-		// its invite is in our client's received invites
-		String receivedInvites = SSCServerDB.getReceivedInvites(client
-				.getName());
-		if (methods.isInList(receivedInvites, name)) {
-			receivedInvites = methods.removeFromList(receivedInvites, name);
-			// remove our client's received invite
-			SSCServerDB
-					.updateReceivedInvites(client.getName(), receivedInvites);
-			// remove the sender's invite
-			String otherSentInvites = methods.removeFromList(
-					SSCServerDB.getSentInvites(name), client.getName());
-			SSCServerDB.updateSentInvites(name, otherSentInvites);
+		// case that the other client has already sent our client an invite
+		// remove our client's received invite (if exist)
+		// remove the sender's invite (if exist)
+		if (SSCServerDB.removeFromReceivedInvites(builder, client.getName(),
+				name)
+				&& SSCServerDB.removeFromSentInvites(builder, name,
+						client.getName())) {
 			// add to friends list for both clients
-			SSCServerDB.insertFriend(client, newFriend)
-			
+			SSCServerDB.insertFriend(client.getName(), name);
+			SSCServerDB.insertFriend(name, client.getName());
 			SSCStreamManager
 					.sendBytes(client.getOutputStream(), "0".getBytes());
 		} else {
-			
+			// case that the other client has NOT sent our client an invite
+			// invites do no exist so create them
+			SSCServerDB.insertReceivedInvite(name, client.getName());
+			SSCServerDB.insertSentInvite(client.getName(), name);
+			SSCStreamManager
+					.sendBytes(client.getOutputStream(), "2".getBytes());
 		}
 	}
 
@@ -346,10 +446,20 @@ public class SSCSServiceStandard implements SSCServerService {
 			// wait for requested client's username
 			client.setPartnerName(new String(SSCStreamManager.readBytes(client
 					.getInputStream())));
+			// client wants to talk to himself
 			if (client.getPartnerName().contentEquals(client.getName()))
 				SSCStreamManager.sendBytes(client.getOutputStream(),
 						"nonsense".getBytes());
+			// check if the partner client is online
 			else if (serverClass.clientIsOnline(client.getPartnerName())) {
+				// check if client is friends with the partner client
+				String lst = SSCServerDB.getFriendList(client.getName());
+				if (!lst.contains(client.getPartnerName())) {
+					SSCStreamManager.sendBytes(client.getOutputStream(),
+							"unavailable".getBytes());
+					continue;
+				}
+
 				clientPartnerService = serverClass.getServiceByName(client
 						.getPartnerName());
 				if (!clientPartnerService.isInChat()
@@ -359,10 +469,9 @@ public class SSCSServiceStandard implements SSCServerService {
 					SSCStreamManager.sendBytes(client.getOutputStream(),
 							"online".getBytes());
 					retry = false;
-				} else {
+				} else
 					SSCStreamManager.sendBytes(client.getOutputStream(),
 							"unavailable".getBytes());
-				}
 			} else
 				SSCStreamManager.sendBytes(client.getOutputStream(),
 						"unavailable".getBytes());

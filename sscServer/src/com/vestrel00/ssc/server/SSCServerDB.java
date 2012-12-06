@@ -221,12 +221,55 @@ public class SSCServerDB {
 	}
 
 	/**
-	 * Removes the strToRemove from the user with the given name in the listType
-	 * in the FRIENDS table.
+	 * Removes the friendToRemove from the user with name in the FRIENDS table.
 	 */
-	private static void removeFromList(String listType, String name,
-			String strToRemove) {
-		// TODO
+	public static boolean removeFromFriends(StringBuilder builder, String name,
+			String friendToRemove) {
+		return removeFromList(builder, "friends", name, friendToRemove);
+	}
+
+	/**
+	 * Removes the enemyToRemove from the user with name in the FRIENDS table.
+	 */
+	public static boolean removeFromEnemies(StringBuilder builder, String name,
+			String enemyToRemove) {
+		return removeFromList(builder, "enemies", name, enemyToRemove);
+	}
+
+	/**
+	 * Removes the sentInviteToRemove from the user with name in the FRIENDS
+	 * table.
+	 */
+	public static boolean removeFromSentInvites(StringBuilder builder,
+			String name, String sentInviteToRemove) {
+		return removeFromList(builder, "sentInvites", name, sentInviteToRemove);
+	}
+
+	/**
+	 * Removes the receivedInviteToRemove from the user with name in the FRIENDS
+	 * table.
+	 */
+	public static boolean removeFromReceivedInvites(StringBuilder builder,
+			String name, String receivedInviteToRemove) {
+		return removeFromList(builder, "receivedInvites", name, receivedInviteToRemove);
+	}
+
+	/**
+	 * Removes the strToRemove from the user with the given name in the listType
+	 * in the FRIENDS table. Needs to provide a StringBuilder to make sure that
+	 * there are no threading issues.
+	 */
+	private static boolean removeFromList(StringBuilder builder, String listType,
+			String name, String strToRemove) {
+		builder.delete(0, builder.length());
+		builder.append(getList(listType, name));
+		int index = builder.indexOf(strToRemove);
+		if (index != -1) {
+			builder.delete(index, index + strToRemove.length() + 1);
+			updateList(listType, builder.toString(), name);
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -273,7 +316,7 @@ public class SSCServerDB {
 	 * @return the list of received invites stored in the clob in the FRIENDS
 	 *         table as <name>,<name>,...
 	 */
-	public static String getBlockList(String name) {
+	public static String getEnemyList(String name) {
 		return getList("enemies", name);
 	}
 

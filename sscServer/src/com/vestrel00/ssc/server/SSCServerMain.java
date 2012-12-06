@@ -70,7 +70,7 @@ public class SSCServerMain {
 	private static void enterCapacity() throws IOException {
 		try {
 			System.out.println("Enter the maximum number of clients "
-					+ "you want your server to be able handle at once");
+					+ "you want your server to be\nable handle at once");
 			maxClientCount = Integer.parseInt(in.readLine());
 		} catch (NumberFormatException e) {
 			System.out.println("Invalid number format.");
