@@ -298,13 +298,21 @@ public class SSCSServiceStandard implements SSCServerService {
 	}
 
 	/**
-	 * Perform the blockUser protocol with the client
+	 * Perform the blockUser protocol with the client. Note that the user does
+	 * not have to exist yet so this will simply add the given name to the list!
+	 * Also note that this removes the friend with the given name if exist.
 	 * 
 	 * @throws IOException
 	 */
-	private void blockUser() {
-		// TODO Auto-generated method stub
-
+	private void blockUser() throws IOException {
+		// wait for name
+		String name = new String(SSCStreamManager.readBytes(client
+				.getInputStream()));
+		// insert name in block list
+		// note that the insertion method does not add duplicate names.
+		SSCServerDB.insertEnemy(client.getName(), name);
+		// remove from the friends list
+		SSCServerDB.removeFromFriends(builder, client.getName(), name);
 	}
 
 	/**
@@ -370,7 +378,8 @@ public class SSCSServiceStandard implements SSCServerService {
 
 	/**
 	 * 
-	 * Perform the protocol with the client
+	 * Perform the protocol with the client. Note that if our client is blocking
+	 * the given name, that enemy will be removed and an invite will be sent.
 	 * 
 	 * @throws IOException
 	 */
@@ -417,6 +426,8 @@ public class SSCSServiceStandard implements SSCServerService {
 				name)
 				&& SSCServerDB.removeFromSentInvites(builder, name,
 						client.getName())) {
+			// remove our client's block listed enemy if exist
+			SSCServerDB.removeFromEnemies(builder, client.getName(), name);
 			// add to friends list for both clients
 			SSCServerDB.insertFriend(client.getName(), name);
 			SSCServerDB.insertFriend(name, client.getName());

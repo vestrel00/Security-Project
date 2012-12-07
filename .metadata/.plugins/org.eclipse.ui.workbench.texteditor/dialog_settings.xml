@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
-		<item value="346" key="DIALOG_WIDTH"/>
-		<item value="27" key="DIALOG_Y_ORIGIN"/>
-		<item value="701" key="DIALOG_HEIGHT"/>
-		<item value="506" key="DIALOG_X_ORIGIN"/>
+		<item value="350" key="DIALOG_WIDTH"/>
+		<item value="25" key="DIALOG_Y_ORIGIN"/>
+		<item value="716" key="DIALOG_HEIGHT"/>
+		<item value="584" key="DIALOG_X_ORIGIN"/>
 		<item value="1|Cantarell|11.0|0|GTK|1|" key="DIALOG_FONT_NAME"/>
 	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
@@ -13,16 +13,16 @@
 		<item value="false" key="casesensitive"/>
 		<item value="false" key="incremental"/>
 		<item value="false" key="wholeword"/>
-		<item value="option" key="selection"/>
+		<item value="login" key="selection"/>
 		<list key="findhistory">
+			<item value="login"/>
+			<item value="blockUser"/>
+			<item value="getList"/>
 			<item value="option"/>
 			<item value="What do you want to do"/>
 			<item value="What do you want to to"/>
 			<item value="You have been"/>
 			<item value="connect"/>
-			<item value="enemy"/>
-			<item value="block"/>
-			<item value="create"/>
 		</list>
 		<list key="replacehistory">
 			<item value="receivedInvite"/>

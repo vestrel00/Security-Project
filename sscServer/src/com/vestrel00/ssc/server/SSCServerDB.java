@@ -251,7 +251,8 @@ public class SSCServerDB {
 	 */
 	public static boolean removeFromReceivedInvites(StringBuilder builder,
 			String name, String receivedInviteToRemove) {
-		return removeFromList(builder, "receivedInvites", name, receivedInviteToRemove);
+		return removeFromList(builder, "receivedInvites", name,
+				receivedInviteToRemove);
 	}
 
 	/**
@@ -259,8 +260,8 @@ public class SSCServerDB {
 	 * in the FRIENDS table. Needs to provide a StringBuilder to make sure that
 	 * there are no threading issues.
 	 */
-	private static boolean removeFromList(StringBuilder builder, String listType,
-			String name, String strToRemove) {
+	private static boolean removeFromList(StringBuilder builder,
+			String listType, String name, String strToRemove) {
 		builder.delete(0, builder.length());
 		builder.append(getList(listType, name));
 		int index = builder.indexOf(strToRemove);
@@ -374,17 +375,20 @@ public class SSCServerDB {
 
 	/**
 	 * This calls {@link #getFriendList(String)} and appends the given name to
-	 * that list and stores it back.
+	 * that list and stores it back. <b>CHECKS if strToInsert is already on the
+	 * list!</b>
 	 * 
 	 * @return true if successfully inserted the given strToInsert to the list
 	 *         of listType of the given user with the given name in the FRIENDS
-	 *         table
+	 *         table or if strToInsert is already on the list
 	 */
 	private static boolean insertToList(String listType, String name,
 			String strToInsert) {
 		try {
-			String list = getFriendList(name);
-			list += strToInsert + ",";
+			String list = getList(listType, name);
+			if (list.contains(strToInsert))
+				return true;
+			list = list + strToInsert + ",";
 			int id = getId(name);
 			Clob newList = conn.createClob();
 			newList.setString(1, list);

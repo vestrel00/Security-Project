@@ -289,13 +289,19 @@ public class SSCClient {
 	}
 
 	/**
-	 * Perform the blockUser protocol with the server
+	 * Perform the blockUser protocol with the server. Removes the user if in
+	 * the friend list.
 	 * 
 	 * @throws IOException
 	 */
-	private void blockUser() {
-		// TODO Auto-generated method stub
-
+	private void blockUser() throws IOException {
+		System.out.println("Block who?");
+		// wait for the user name
+		String name = userIn.readLine();
+		// send name to server
+		SSCStreamManager.sendBytes(out, name.getBytes());
+		// assert that server inserted the enemy
+		System.out.println(name + " is now your enemy!");
 	}
 
 	/**
@@ -372,7 +378,9 @@ public class SSCClient {
 	}
 
 	/**
-	 * Perform the protocol with the server service.
+	 * 
+	 * Perform the protocol with the server. Note that if our client is blocking
+	 * the given name, that enemy will be removed and an invite will be sent.
 	 * 
 	 * @throws IOException
 	 */
