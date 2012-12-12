@@ -12,3 +12,5 @@ db
 clob
 clobs
 decryption
+pre
+plaintext

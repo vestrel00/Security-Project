@@ -5,17 +5,21 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 
 import com.vestrel00.ssc.client.interf.SSCCryptoPrivate;
+import com.vestrel00.ssc.client.interf.SSCCryptoPublic;
 import com.vestrel00.ssc.client.interf.SSCProtocol;
 import com.vestrel00.ssc.client.protocols.SSCClientMessageSender;
 import com.vestrel00.ssc.client.protocols.SSCClientMessageReceiver;
 import com.vestrel00.ssc.client.shared.SSCByteMethods;
 import com.vestrel00.ssc.client.shared.SSCCryptoAES;
+import com.vestrel00.ssc.client.shared.SSCCryptoRSA;
 import com.vestrel00.ssc.client.shared.SSCStreamManager;
 
 /**
@@ -36,7 +40,8 @@ public class SSCClient {
 	private SSCClientBuffer buffer;
 	private SSCProtocol receiver;
 	private SSCClientMessageSender sender;
-	private SSCCryptoPrivate crypt;
+	private SSCCryptoPrivate privCrypt;
+	private SSCCryptoPublic pubCrypt;
 	private boolean isRunning, isInChat;
 	private String host, username, partnerName;
 	private int port;
@@ -70,7 +75,7 @@ public class SSCClient {
 	/**
 	 * <p>
 	 * Sends the requested buffer size to the server. This is performed with
-	 * server's ConnectionReception.
+	 * server's ConnectionReception. Also initializes the public crypto.
 	 * </p>
 	 * <ol>
 	 * <li>Send server null flagging the server that this is the initial
@@ -82,8 +87,19 @@ public class SSCClient {
 	 * @throws IOException
 	 */
 	private void init(int maxBufferSize) throws IOException {
+		// Wait for PublicKey & init public crypto
+		// crypto will not have a copy of the private key
+		// thus client may only encrypt using pubCrypt
+		ObjectInputStream oin = new ObjectInputStream(in);
+		try {
+			pubCrypt = new SSCCryptoRSA(null, (PublicKey) oin.readObject());
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		// do not close the stream! it will still be used
+
 		// TODO prevent using null as user name
-		SSCStreamManager.sendBytes(out, "null".getBytes());
+		SSCStreamManager.sendBytes(out, pubCrypt.encrypt("null".getBytes()));
 		SSCStreamManager.readBytes(in);
 		SSCStreamManager.sendBytes(out, String.valueOf(maxBufferSize)
 				.getBytes());
@@ -125,7 +141,6 @@ public class SSCClient {
 	 * @return true if success.
 	 * @throws IOException
 	 */
-	// TODO replace with actual implementation
 	private boolean login() throws IOException {
 		int attempts = 0;
 		System.out.println(new String(SSCStreamManager.readBytes(in)));
@@ -136,7 +151,8 @@ public class SSCClient {
 			if (choice.contentEquals("login")) {
 				while (attempts < 3) {
 					// flag service to perform login protocol
-					SSCStreamManager.sendBytes(out, choice.getBytes());
+					SSCStreamManager.sendBytes(out,
+							pubCrypt.encrypt(choice.getBytes()));
 					// wait for the OK
 					SSCStreamManager.readBytes(in);
 					System.out.println("Enter username");
@@ -144,22 +160,22 @@ public class SSCClient {
 					boolean retry = true;
 					try {
 						while (retry) {
-							// send username
+							// send E(username)
 							username = userIn.readLine();
-							SSCStreamManager
-									.sendBytes(out, username.getBytes());
+							SSCStreamManager.sendBytes(out,
+									pubCrypt.encrypt(username.getBytes()));
 							// wait for the salt (this is a bogus value if
 							// given username does not exist)
 							byte[] salt = SSCStreamManager.readBytes(in);
 							System.out.println("Enter password");
-							// send saltedHashedPassword
+							// send E(saltedHashedPassword)
 							try {
-								SSCStreamManager.sendBytes(
-										out,
-										MessageDigest.getInstance("SHA-1")
-												.digest(SSCByteMethods.concat(
-														salt, userIn.readLine()
-																.getBytes())));
+								SSCStreamManager.sendBytes(out, pubCrypt
+										.encrypt(MessageDigest.getInstance(
+												"SHA-1").digest(
+												SSCByteMethods.concat(salt,
+														userIn.readLine()
+																.getBytes()))));
 							} catch (NoSuchAlgorithmException e) {
 								e.printStackTrace();
 							}
@@ -182,7 +198,8 @@ public class SSCClient {
 				return false;
 			} else if (choice.contentEquals("create")) {
 				// Flag the service to perform the createAccount Protocol
-				SSCStreamManager.sendBytes(out, "create".getBytes());
+				SSCStreamManager.sendBytes(out,
+						pubCrypt.encrypt("create".getBytes()));
 				createAccount();
 				return login();
 			} else if (choice != null)
@@ -194,14 +211,14 @@ public class SSCClient {
 	 * Perform the create protocol with the service.
 	 * 
 	 */
-	// TODO Wrap with RSA
 	private void createAccount() throws IOException {
 		boolean retry = true;
 		try {
 			while (retry) {
 				System.out.println("Enter username");
-				// Send username
-				SSCStreamManager.sendBytes(out, userIn.readLine().getBytes());
+				// Send E(username)
+				SSCStreamManager.sendBytes(out,
+						pubCrypt.encrypt(userIn.readLine().getBytes()));
 				// Wait for server response
 				String response = new String(SSCStreamManager.readBytes(in));
 				if (response.contentEquals("bad")) {
@@ -209,8 +226,9 @@ public class SSCClient {
 					continue;
 				}
 				System.out.println("Enter password");
-				// Send password
-				SSCStreamManager.sendBytes(out, userIn.readLine().getBytes());
+				// Send E(password)
+				SSCStreamManager.sendBytes(out,
+						pubCrypt.encrypt(userIn.readLine().getBytes()));
 				// wait for server response
 				SSCStreamManager.readBytes(in);
 				System.out.println("Account created successfully.");
@@ -252,7 +270,9 @@ public class SSCClient {
 		// infinite loop. Exit option within loop
 		while (true) {
 			choice = userIn.readLine();
-			SSCStreamManager.sendBytes(out, choice.getBytes());
+			// send E(choice)
+			SSCStreamManager
+					.sendBytes(out, pubCrypt.encrypt(choice.getBytes()));
 			if (choice.contentEquals("friends"))
 				System.out.println(new String(SSCStreamManager.readBytes(in)));
 			else if (choice.contentEquals("enemies"))
@@ -298,8 +318,8 @@ public class SSCClient {
 		System.out.println("Block who?");
 		// wait for the user name
 		String name = userIn.readLine();
-		// send name to server
-		SSCStreamManager.sendBytes(out, name.getBytes());
+		// send E(name) to server
+		SSCStreamManager.sendBytes(out, pubCrypt.encrypt(name.getBytes()));
 		// assert that server inserted the enemy
 		System.out.println(name + " is now your enemy!");
 	}
@@ -317,11 +337,12 @@ public class SSCClient {
 		if (!lst.contentEquals("empty")) {
 			System.out.println("Accept who?");
 			System.out.println(lst);
-			// send name to server
+			// send E(name) to server
 			while (retry < 3) {
 				name = userIn.readLine();
 				if (lst.contains(name)) {
-					SSCStreamManager.sendBytes(out, name.getBytes());
+					SSCStreamManager.sendBytes(out,
+							pubCrypt.encrypt(name.getBytes()));
 					System.out.println("Successfully accepted invite from "
 							+ name);
 					System.out.println("You are now friends with " + name);
@@ -334,7 +355,8 @@ public class SSCClient {
 			}
 			// failed
 			if (retry != 10) {
-				SSCStreamManager.sendBytes(out, "fail".getBytes());
+				SSCStreamManager.sendBytes(out,
+						pubCrypt.encrypt("fail".getBytes()));
 				System.out.println("Failed to accept any invites");
 			}
 		} else
@@ -354,11 +376,12 @@ public class SSCClient {
 		if (!lst.contentEquals("empty")) {
 			System.out.println("Reject who?");
 			System.out.println(lst);
-			// send name to server
+			// send E(name) to server
 			while (retry < 3) {
 				name = userIn.readLine();
 				if (lst.contains(name)) {
-					SSCStreamManager.sendBytes(out, name.getBytes());
+					SSCStreamManager.sendBytes(out,
+							pubCrypt.encrypt(name.getBytes()));
 					System.out.println("Successfully rejected invite from "
 							+ name);
 					retry = 10;
@@ -370,7 +393,8 @@ public class SSCClient {
 			}
 			// failed
 			if (retry != 10) {
-				SSCStreamManager.sendBytes(out, "fail".getBytes());
+				SSCStreamManager.sendBytes(out,
+						pubCrypt.encrypt("fail".getBytes()));
 				System.out.println("Failed to reject any invites");
 			}
 		} else
@@ -389,7 +413,8 @@ public class SSCClient {
 		System.out
 				.println("Enter the username you wish to invite to your friend list.");
 		String name = userIn.readLine();
-		SSCStreamManager.sendBytes(out, name.getBytes());
+		// send E(name)
+		SSCStreamManager.sendBytes(out, pubCrypt.encrypt(name.getBytes()));
 		// wait for resultCode (0 = added, 1 = already friends, 2 = invite sent,
 		// 3 = already sent invite, -1 = not exist/blocked
 		int resultCode = Integer.parseInt(new String(SSCStreamManager
@@ -422,13 +447,14 @@ public class SSCClient {
 	 * 
 	 * @throws IOException
 	 */
-	// TODO wrap with RSA
 	private void connect() throws IOException {
 		while (!isInChat) {
 			System.out
 					.println("Enter username of client you wish to chat with");
 			partnerName = new String(userIn.readLine());
-			SSCStreamManager.sendBytes(out, partnerName.getBytes());
+			// send E(partnerName)
+			SSCStreamManager.sendBytes(out,
+					pubCrypt.encrypt(partnerName.getBytes()));
 			String response = new String(SSCStreamManager.readBytes(in));
 			if (response.contentEquals("online")) {
 				System.out.println(partnerName + " is online.\nWaiting for "
@@ -448,11 +474,10 @@ public class SSCClient {
 	}
 
 	/**
-	 * Initialize the protocol which also initializes the crypto.
+	 * Initialize the protocol which also initializes the privCrypto.
 	 * 
 	 * @throws IOException
 	 */
-	// TODO wrap with RSA
 	private void initReceiver() throws IOException {
 		// wait for secretKey
 		byte[] secretKey = SSCStreamManager.readBytes(in);
@@ -460,8 +485,8 @@ public class SSCClient {
 		SSCStreamManager.sendBytes(out, "ok".getBytes());
 		// wait for confirmCode
 		byte[] confirmCode = SSCStreamManager.readBytes(in);
-		crypt = new SSCCryptoAES(secretKey, confirmCode);
-		receiver = new SSCClientMessageReceiver(this, crypt);
+		privCrypt = new SSCCryptoAES(secretKey, confirmCode);
+		receiver = new SSCClientMessageReceiver(this, privCrypt);
 	}
 
 	/**
@@ -472,7 +497,6 @@ public class SSCClient {
 	 * @throws UnknownHostException
 	 * @throws IOException
 	 */
-	// TODO wrap with RSA
 	private void initSender() throws UnknownHostException, IOException {
 		// System.out.println(username + " generating new socket");
 		Socket sock = new Socket(host, port);
@@ -481,9 +505,16 @@ public class SSCClient {
 				sock.getOutputStream());
 
 		// Note: 2 different in/out streams at this point! Do not get confused.
-		// send username : will generate a pending client in the server list
-		SSCStreamManager.sendBytes(receptionOut, username.getBytes());
+		// send E(username) : will generate a pending client in the server list
+		SSCStreamManager.sendBytes(receptionOut,
+				pubCrypt.encrypt(username.getBytes()));
 		// System.out.println(username + " waiting for server OK");
+		// need to flush because public key is sent (this is second time)
+		try {
+			new ObjectInputStream(receptionIn).readObject();
+		} catch (ClassNotFoundException e) {
+
+		}
 		// wait for server reception OK
 		SSCStreamManager.readBytes(receptionIn);
 		// server should now have a new pending client in the pending list
@@ -493,7 +524,7 @@ public class SSCClient {
 
 		// System.out.println(username + " launching sender thread");
 		// finally init and launch the sender
-		sender = new SSCClientMessageSender(this, sock, crypt);
+		sender = new SSCClientMessageSender(this, sock, privCrypt);
 		new Thread(sender).start();
 	}
 

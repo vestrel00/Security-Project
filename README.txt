@@ -5,6 +5,9 @@ REAME
 
 *READ THE ENTIRE THING PLEASE*
 
+Secure Chat application over TCP/IP that uses RSA for pre-chat transactions
+and AES in CBC mode for in-chat transactions.
+
 I use Eclipse IDE.
 Source code for the server implementation is in sscServer folder.
 Source code for the client implementation is in sscClient folder.

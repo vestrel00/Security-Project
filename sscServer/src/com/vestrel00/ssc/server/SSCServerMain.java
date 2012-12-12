@@ -1,11 +1,21 @@
 package com.vestrel00.ssc.server;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPrivateKeySpec;
+import java.security.spec.RSAPublicKeySpec;
 import java.sql.SQLException;
 
 import com.vestrel00.ssc.server.interf.SSCServer;
+import com.vestrel00.ssc.server.shared.SSCFileManager;
 
 /**
  * Starts the server program of SSC.
@@ -28,7 +38,53 @@ public class SSCServerMain {
 		enterCapacity();
 		enterBufferSize();
 		initDB();
+		initPublicCrypto();
 		initServer();
+	}
+
+	/**
+	 * Generate and save an RSA key pair if it does not yet exist. Otherwise, it
+	 * does nothing.
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
+	 */
+	private static void initPublicCrypto() throws FileNotFoundException, IOException {
+		// check if key files exist
+		File dir = new File("keys");
+		if (dir.exists())
+			return;
+		
+		// create empty files for the keys
+		new File("keys").mkdir();
+		new File("keys/public.key").createNewFile();
+		new File("keys/private.key").createNewFile();
+		
+		System.out.println("Creating RSA Keypair...");
+		try {
+			// generate keys
+			KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+			// gen.initialize(2048);
+			 // for faster decryption
+			// not as secure as 2048 and don't last as long
+			// but does the job anyways for a small project
+			gen.initialize(1024);
+			KeyPair pair = gen.generateKeyPair();
+			// Key pubKey = pair.getPublic();
+			// Key privKey = pair.getPrivate();
+			// save keys
+			KeyFactory fact = KeyFactory.getInstance("RSA");
+			RSAPublicKeySpec pubSpec = fact.getKeySpec(pair.getPublic(),
+					RSAPublicKeySpec.class);
+			RSAPrivateKeySpec privSpec = fact.getKeySpec(pair.getPrivate(),
+					RSAPrivateKeySpec.class);
+			
+			SSCFileManager.saveToFile("keys/public.key", pubSpec.getModulus(),
+					pubSpec.getPublicExponent());
+			SSCFileManager.saveToFile("keys/private.key", privSpec.getModulus(),
+					privSpec.getPrivateExponent());
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private static void initDB() {

@@ -5,15 +5,20 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.vestrel00.ssc.server.datatypes.SSCPendingClient;
 import com.vestrel00.ssc.server.datatypes.SSCServerClient;
+import com.vestrel00.ssc.server.interf.SSCCryptoPublic;
 import com.vestrel00.ssc.server.interf.SSCServer;
 import com.vestrel00.ssc.server.interf.SSCServerService;
+import com.vestrel00.ssc.server.shared.SSCCryptoRSA;
+import com.vestrel00.ssc.server.shared.SSCFileManager;
 import com.vestrel00.ssc.server.shared.SSCSettings;
 import com.vestrel00.ssc.server.shared.SSCStreamManager;
 
@@ -31,6 +36,8 @@ public class SSCServerStandard implements SSCServer {
 	private List<SSCPendingClient> pending;
 	private List<SSCServerService> clientServices;
 	private SSCServerBuffer buffer;
+	private SSCCryptoPublic pubCrypt;
+	private PublicKey pubKey;
 	private boolean isListening;
 	private int maxClientCount;
 
@@ -41,6 +48,12 @@ public class SSCServerStandard implements SSCServer {
 		clientServices = new ArrayList<SSCServerService>();
 		buffer = new SSCServerBuffer(maxClientCount, maxClientBufferSize);
 		settings = new SSCSettings();
+		// initialize Public Crypto
+		// Note that server will not be using the public key
+		// since it will not encrypt anything - but store it anyways
+		pubKey = SSCFileManager.readPublicFromFile("keys/public.key");
+		pubCrypt = new SSCCryptoRSA(
+				SSCFileManager.readPrivateFromFile("keys/private.key"), pubKey);
 		isListening = true;
 	}
 
@@ -125,6 +138,9 @@ public class SSCServerStandard implements SSCServer {
 	@Override
 	public void removeService(String clientName, int clientBufferId) {
 		int index = -1;
+		if (clientName == null)
+			return;
+
 		for (int i = 0; i < clientServices.size(); i++)
 			if (clientServices.get(i).getClient().getName() != null)
 				if (clientServices.get(i).getClient().getName()
@@ -135,8 +151,7 @@ public class SSCServerStandard implements SSCServer {
 		if (index != -1)
 			clientServices.remove(index);
 		buffer.removeClientById(clientBufferId);
-		if (clientName != null)
-			System.out.println("User " + clientName + " has logged out.");
+		System.out.println("User " + clientName + " has logged out.");
 	}
 
 	@Override
@@ -199,22 +214,37 @@ public class SSCServerStandard implements SSCServer {
 		 * new service and client data type will be created. If the client is
 		 * logged in, then it is in the initSender() protocol and its service is
 		 * in the initReceiver() protocol and this new socket is placed in the
-		 * pending list as an SSCPendingClient.
+		 * pending list as an SSCPendingClient. <br>
+		 * Also sends over the public key - to AMEND!.
 		 * 
 		 * @see com.vestrel00.ssc.server.datatypes.SSCPendingClient
 		 */
 		@Override
 		public void run() {
+			// temporary streams
+			// the references to these streams are not saved or passed
+			// change it if not lazy
 			DataInputStream in = null;
 			DataOutputStream out = null;
 			byte[] uname = null;
+
 			try {
 				in = new DataInputStream(client.getInputStream());
 				out = new DataOutputStream(client.getOutputStream());
-				uname = SSCStreamManager.readBytes(in);
+
+				// send PublicKey - DANGEROUS!
+				// public key should be distributed with client program
+				// not sent like this on connect! TODO?
+				ObjectOutputStream oout = new ObjectOutputStream(out);
+				oout.writeObject(pubKey);
+				// do not close the stream! it will still be used
+				// this is actually done twice- b4 login and on connect()
+
+				// wait for E(username)
+				uname = pubCrypt.decrypt(SSCStreamManager.readBytes(in));
 				SSCStreamManager.sendBytes(out, "OK".getBytes());
 			} catch (IOException e) {
-				e.printStackTrace();
+				// e.printStackTrace();
 			}
 
 			if (new String(uname).contentEquals("null")) {
@@ -222,11 +252,12 @@ public class SSCServerStandard implements SSCServer {
 					int bufferSize;
 					bufferSize = Integer.parseInt(new String(SSCStreamManager
 							.readBytes(in)));
-					clientServices.add(new SSCSServiceStandard(serverClass,
-							new SSCServerClient(buffer.allocate(bufferSize),
-									client, null)));
-					new Thread(clientServices.get(clientServices.size() - 1))
-							.start();
+					SSCSServiceStandard service = new SSCSServiceStandard(
+							serverClass, new SSCServerClient(
+									buffer.allocate(bufferSize), client, null),
+							pubCrypt);
+					clientServices.add(service);
+					new Thread(service).start();
 				} catch (NumberFormatException | IOException e) {
 					e.printStackTrace();
 				}
@@ -387,7 +418,7 @@ public class SSCServerStandard implements SSCServer {
 		// list, however with name = null. So if more than one client is
 		// connected but has not logged in, how can we tell which client
 		// to remove if their name is null? Answer is to make name as an
-		// integer if client is connected but not logged in instad of
+		// integer if client is connected but not logged in instead of
 		// null.
 		private void printLoggedInUsers() {
 			String users = "";

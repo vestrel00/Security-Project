@@ -57,10 +57,10 @@ public class SSCClientMessageSender implements Runnable {
 	 * <ol>
 	 * <li>E(m) is sent to server</li>
 	 * <li>Client waits for server OK</li>
-	 * <li>Client sends H(m)</li>
+	 * <li>Client sends H(E(m))</li>
 	 * </ol>
-	 * Server checks if H(D(E(m))) == H(m). If so, m is stored in its buffer as
-	 * a byte[] and E(m) and H(m) is forwarded to the receiving client.
+	 * Server checks if H(E(m)) == H(E(m)). If so, m is stored in its buffer as
+	 * a byte[] and E(m) and H(E(m)) is forwarded to the receiving client.
 	 * 
 	 * @throws IOException
 	 */
@@ -97,7 +97,8 @@ public class SSCClientMessageSender implements Runnable {
 				// System.out.println(client.getUserName()
 				// + "Sender: sending E(m)");
 				// send E(m)
-				SSCStreamManager.sendBytes(out, crypt.encrypt(mStr.getBytes()));
+				byte[] em = crypt.encrypt(mStr.getBytes());
+				SSCStreamManager.sendBytes(out, em);
 
 				// wait for confirmCode
 				SSCStreamManager.readBytes(client.getSender().getInputStream());
@@ -125,19 +126,17 @@ public class SSCClientMessageSender implements Runnable {
 				if (SSCByteMethods.equal(crypt.getConfirmCode(), resultCode)) {
 					// System.out.println(client.getUserName()
 					// + "Sender: sending H(m)");
-					// send H(m)
-					SSCStreamManager.sendBytes(
-							out,
-							MessageDigest.getInstance("SHA-1").digest(
-									mStr.getBytes()));
+					// send H(E(m))
+					SSCStreamManager.sendBytes(out,
+							MessageDigest.getInstance("SHA-1").digest(em));
 				} else {
-					// send dummy H(m)
+					// send dummy H(E(m))
 					SSCStreamManager.sendBytes(
 							out,
 							MessageDigest.getInstance("SHA-1").digest(
-									String.valueOf(
+									crypt.encrypt(String.valueOf(
 											new SecureRandom().nextInt(9999))
-											.getBytes()));
+											.getBytes())));
 					System.out
 							.println("Warning! Connection may be compromised.\n"
 									+ "Message not sent.");

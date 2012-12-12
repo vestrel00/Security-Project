@@ -103,12 +103,12 @@ public class SSCServerMessageReceiver implements Runnable {
 				if (debug)
 					System.out.println(service.getClient().getName()
 							+ "Receiver: waiting for H(m)");
-				// Wait for H(m)
+				// Wait for H(E(m))
 				byte[] hm = SSCStreamManager.readBytes(in);
 				// m
 				byte[] m = crypt.decrypt(em, iv);
 				// H(E(m))
-				byte[] hem = MessageDigest.getInstance("SHA-1").digest(m);
+				byte[] hem = MessageDigest.getInstance("SHA-1").digest(em);
 				// authenticate
 				if (hem.length != hm.length)
 					return;
@@ -129,7 +129,7 @@ public class SSCServerMessageReceiver implements Runnable {
 					service.getClient().getBuffer().addMessage(m);
 					// make sure hm and iv are stored before em!
 					service.getClientPartnerService().getSender()
-							.addToPendingHM(hm);
+							.addToPendingHEM(hm);
 					service.getClientPartnerService().getSender()
 							.addToPendingIV(iv);
 					service.getClientPartnerService().getSender()

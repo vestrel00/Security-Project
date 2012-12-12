@@ -1,0 +1,20 @@
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+
+
+		try {
+			cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.DECRYPT_MODE, pubKey);
+			return cipher.doFinal(message);
+		} catch (IllegalBlockSizeException | BadPaddingException
+				| NoSuchAlgorithmException | NoSuchPaddingException
+				| InvalidKeyException e) {
+			e.printStackTrace();
+		}
+		return null;
+	

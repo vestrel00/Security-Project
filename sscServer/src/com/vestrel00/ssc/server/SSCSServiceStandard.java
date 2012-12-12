@@ -8,6 +8,7 @@ import java.security.SecureRandom;
 import com.vestrel00.ssc.server.datatypes.SSCPendingClient;
 import com.vestrel00.ssc.server.datatypes.SSCServerClient;
 import com.vestrel00.ssc.server.interf.SSCCryptoPrivate;
+import com.vestrel00.ssc.server.interf.SSCCryptoPublic;
 import com.vestrel00.ssc.server.interf.SSCServer;
 import com.vestrel00.ssc.server.interf.SSCServerService;
 import com.vestrel00.ssc.server.protocols.SSCServerMessageReceiver;
@@ -19,16 +20,25 @@ import com.vestrel00.ssc.server.shared.SSCStringMethods;
 
 /**
  * An implementation of the SSCServerService that uses RSA to secure initial
- * client-server connection.
+ * client-server connection.<br>
+ * 
+ * <ol>
+ * <b>To amend</b>
+ * <li>sending list of names as plaintext</li>
+ * <li>sending the RSA public key on pre-login on SSCServerStandard#run()</li>
+ * <li>sending the AES private key on connect()</li>
+ * </ol>
  * 
  * @author Estrellado, Vandolf
  * @see SSCServerService
  * 
  */
 public class SSCSServiceStandard implements SSCServerService {
+
 	private SSCServerMessageSender sender;
 	private SSCServerMessageReceiver receiver;
-	private SSCCryptoPrivate crypt;
+	private SSCCryptoPrivate privCrypt;
+	private SSCCryptoPublic pubCrypt;
 	private SSCServer serverClass;
 	private SSCServerService clientPartnerService;
 	private boolean inService, isConnected, isInChat;
@@ -51,9 +61,11 @@ public class SSCSServiceStandard implements SSCServerService {
 	 * @param client
 	 *            The client that will be serviced.
 	 */
-	public SSCSServiceStandard(SSCServer serverClass, SSCServerClient client) {
+	public SSCSServiceStandard(SSCServer serverClass, SSCServerClient client,
+			SSCCryptoPublic pubCrypt) {
 		this.serverClass = serverClass;
 		this.client = client;
+		this.pubCrypt = pubCrypt;
 		inService = true;
 		rand = new SecureRandom();
 		methods = new SSCStringMethods();
@@ -75,8 +87,8 @@ public class SSCSServiceStandard implements SSCServerService {
 		int attempts = 0;
 		SSCStreamManager.sendBytes(client.getOutputStream(),
 				"Login or Create new account? (login | create)".getBytes());
-		String choice = new String(SSCStreamManager.readBytes(client
-				.getInputStream()));
+		String choice = new String(pubCrypt.decrypt(SSCStreamManager
+				.readBytes(client.getInputStream())));
 		if (choice.contentEquals("login")) {
 			while (attempts < 3) {
 				// messy patch
@@ -86,9 +98,9 @@ public class SSCSServiceStandard implements SSCServerService {
 
 				SSCStreamManager.sendBytes(client.getOutputStream(),
 						"OK".getBytes());
-				// wait for the username
-				String uname = new String(SSCStreamManager.readBytes(client
-						.getInputStream()));
+				// wait for the E(username)
+				String uname = new String(pubCrypt.decrypt(SSCStreamManager
+						.readBytes(client.getInputStream())));
 				// send the salt or a bogus one
 				if (SSCServerDB.userExists(uname))
 					SSCStreamManager.sendBytes(client.getOutputStream(),
@@ -99,9 +111,9 @@ public class SSCSServiceStandard implements SSCServerService {
 					SSCStreamManager.sendBytes(client.getOutputStream(),
 							bogusSalt);
 				}
-				// wait for the saltedHashedPass
-				byte[] saltedHashedPass = SSCStreamManager.readBytes(client
-						.getInputStream());
+				// wait for the E(saltedHashedPass)
+				byte[] saltedHashedPass = pubCrypt.decrypt(SSCStreamManager
+						.readBytes(client.getInputStream()));
 
 				if (SSCServerDB.userExists(uname)) {
 					if (SSCByteMethods.equal(saltedHashedPass,
@@ -145,13 +157,12 @@ public class SSCSServiceStandard implements SSCServerService {
 	 * @throws IOException
 	 * 
 	 */
-	// TODO Wrap with RSA
 	private void createAccount() throws IOException {
 		boolean retry = true;
 		while (retry) {
-			// wait for the username
-			String uname = new String(SSCStreamManager.readBytes(client
-					.getInputStream()));
+			// wait for the (username)
+			String uname = new String(pubCrypt.decrypt(SSCStreamManager
+					.readBytes(client.getInputStream())));
 			if (SSCServerDB.userExists(uname)) {
 				SSCStreamManager.sendBytes(client.getOutputStream(),
 						"bad".getBytes());
@@ -159,8 +170,9 @@ public class SSCSServiceStandard implements SSCServerService {
 			}
 			SSCStreamManager.sendBytes(client.getOutputStream(),
 					"good".getBytes());
-			// wait for the password
-			byte[] pass = SSCStreamManager.readBytes(client.getInputStream());
+			// wait for the E(password)
+			byte[] pass = pubCrypt.decrypt(SSCStreamManager.readBytes(client
+					.getInputStream()));
 			// user requests to start over
 			if (new String(pass).contentEquals("restart")) {
 				System.out.flush();
@@ -229,13 +241,13 @@ public class SSCSServiceStandard implements SSCServerService {
 	 * 
 	 * @throws IOException
 	 */
-	// TODO wrap with RSA
 	private void option() throws IOException {
 		String choice;
 		// infinite loop. Exit within loop.
 		while (true) {
-			choice = new String(SSCStreamManager.readBytes(client
-					.getInputStream()));
+			// wait for E(choice)
+			choice = new String(pubCrypt.decrypt(SSCStreamManager
+					.readBytes(client.getInputStream())));
 
 			if (choice.contentEquals("friends"))
 				try {
@@ -305,9 +317,9 @@ public class SSCSServiceStandard implements SSCServerService {
 	 * @throws IOException
 	 */
 	private void blockUser() throws IOException {
-		// wait for name
-		String name = new String(SSCStreamManager.readBytes(client
-				.getInputStream()));
+		// wait for E(name)
+		String name = new String(pubCrypt.decrypt(SSCStreamManager
+				.readBytes(client.getInputStream())));
 		// insert name in block list
 		// note that the insertion method does not add duplicate names.
 		SSCServerDB.insertEnemy(client.getName(), name);
@@ -327,9 +339,9 @@ public class SSCSServiceStandard implements SSCServerService {
 					.getReceivedInvites(client.getName()).getBytes());
 			// throw bounds exception here if empty list
 			// skipping the following lines
-			// wait for response
-			String response = new String(SSCStreamManager.readBytes(client
-					.getInputStream()));
+			// wait for E(response)
+			String response = new String(pubCrypt.decrypt(SSCStreamManager
+					.readBytes(client.getInputStream())));
 			if (!response.contentEquals("fail")) {
 				// delete the received invite
 				SSCServerDB.removeFromReceivedInvites(builder,
@@ -360,9 +372,9 @@ public class SSCSServiceStandard implements SSCServerService {
 					.getReceivedInvites(client.getName()).getBytes());
 			// throw bounds exception here if empty list
 			// skipping the following lines
-			// wait for response
-			String response = new String(SSCStreamManager.readBytes(client
-					.getInputStream()));
+			// wait for E(response)
+			String response = new String(pubCrypt.decrypt(SSCStreamManager
+					.readBytes(client.getInputStream())));
 			if (!response.contentEquals("fail"))
 				// delete the received invite
 				SSCServerDB.removeFromReceivedInvites(builder,
@@ -384,9 +396,9 @@ public class SSCSServiceStandard implements SSCServerService {
 	 * @throws IOException
 	 */
 	private void sendInvites() throws IOException {
-		// wait for name
-		String name = new String(SSCStreamManager.readBytes(client
-				.getInputStream()));
+		// wait for E(name)
+		String name = new String(pubCrypt.decrypt(SSCStreamManager
+				.readBytes(client.getInputStream())));
 		// check db if name exist
 		if (!SSCServerDB.userExists(name)) {
 			SSCStreamManager.sendBytes(client.getOutputStream(),
@@ -450,13 +462,12 @@ public class SSCSServiceStandard implements SSCServerService {
 	 * 
 	 * @throws IOException
 	 */
-	// TODO wrap with RSA
 	private void connect() throws IOException {
 		boolean retry = true;
 		while (retry) {
-			// wait for requested client's username
-			client.setPartnerName(new String(SSCStreamManager.readBytes(client
-					.getInputStream())));
+			// wait for E(requested client's username)
+			client.setPartnerName(new String(pubCrypt.decrypt(SSCStreamManager
+					.readBytes(client.getInputStream()))));
 			// client wants to talk to himself
 			if (client.getPartnerName().contentEquals(client.getName()))
 				SSCStreamManager.sendBytes(client.getOutputStream(),
@@ -497,11 +508,10 @@ public class SSCSServiceStandard implements SSCServerService {
 	 * gets here first is the one!
 	 * </p>
 	 * The service that gets here first compute the secret key and confirm code
-	 * that is passed onto the protocol which passes onto the crypto.
+	 * that is passed onto the protocol which passes onto the privCrypto.
 	 * 
 	 * @throws IOException
 	 */
-	// TODO wrap with RSA
 	private void initSender() throws IOException {
 		isConnected = true;
 		if (!clientPartnerService.isConnected()) {
@@ -522,12 +532,13 @@ public class SSCSServiceStandard implements SSCServerService {
 			}
 		}
 		// both services have the keys ready to send to their clients
+		// TODO should not send secret key in the clear
 		SSCStreamManager.sendBytes(client.getOutputStream(), secretKey);
 		// wait for client OK
 		SSCStreamManager.readBytes(client.getInputStream());
 		SSCStreamManager.sendBytes(client.getOutputStream(), confirmCode);
-		crypt = new SSCCryptoAES(secretKey, confirmCode);
-		sender = new SSCServerMessageSender(this, crypt);
+		privCrypt = new SSCCryptoAES(secretKey, confirmCode);
+		sender = new SSCServerMessageSender(this, privCrypt);
 	}
 
 	/**
@@ -551,7 +562,7 @@ public class SSCSServiceStandard implements SSCServerService {
 		SSCStreamManager.sendBytes(pc.getOutputStream(), "OK".getBytes());
 
 		// finally init and launch the receiver
-		receiver = new SSCServerMessageReceiver(this, pc.getSocket(), crypt);
+		receiver = new SSCServerMessageReceiver(this, pc.getSocket(), privCrypt);
 		new Thread(receiver).start();
 	}
 

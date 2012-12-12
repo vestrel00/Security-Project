@@ -1,26 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <qualifiedTypeNameHistroy>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.protocols.SSCProtocol"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.server.SSCServer"/>
-<fullyQualifiedTypeName name="java.io.IOException"/>
-<fullyQualifiedTypeName name="java.net.ConnectException"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.server.interf.SSCServer"/>
-<fullyQualifiedTypeName name="javax.crypto.spec.SecretKeySpec"/>
-<fullyQualifiedTypeName name="javax.crypto.Cipher"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.server.SSCStreamManager"/>
-<fullyQualifiedTypeName name="java.io.EOFException"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.client.shared.SSCCryptoAES"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.server.protocols.SSCServerProtocol"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.client.interf.SSCProtocol"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.client.protocols.SSCUserIS"/>
-<fullyQualifiedTypeName name="java.security.MessageDigest"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.server.SSCServerBuffer"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.client.shared.SSCStreamManager"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.client.protocols.SSCClientProtocol"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.client.protocols.SSCClientMessageSender"/>
-<fullyQualifiedTypeName name="java.util.List"/>
-<fullyQualifiedTypeName name="com.vestrel00.ssc.server.datatypes.SSCPendingMessage"/>
-<fullyQualifiedTypeName name="java.util.ArrayList"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.interf.SSCProtocol"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.interf.SSCServerService"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.protocols.SSCServerMessageReceiver"/>
@@ -60,4 +39,25 @@
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.interf.SSCCryptoPrivate"/>
 <fullyQualifiedTypeName name="java.sql.Clob"/>
 <fullyQualifiedTypeName name="com.vestrel00.ssc.server.shared.SSCStringMethods"/>
+<fullyQualifiedTypeName name="java.security.KeyPairGenerator"/>
+<fullyQualifiedTypeName name="java.security.KeyPair"/>
+<fullyQualifiedTypeName name="java.security.Key"/>
+<fullyQualifiedTypeName name="java.io.File"/>
+<fullyQualifiedTypeName name="java.math.BigInteger"/>
+<fullyQualifiedTypeName name="java.io.ObjectOutputStream"/>
+<fullyQualifiedTypeName name="java.io.BufferedOutputStream"/>
+<fullyQualifiedTypeName name="java.io.FileOutputStream"/>
+<fullyQualifiedTypeName name="java.io.FileInputStream"/>
+<fullyQualifiedTypeName name="java.io.BufferedInputStream"/>
+<fullyQualifiedTypeName name="java.security.spec.RSAPublicKeySpec"/>
+<fullyQualifiedTypeName name="java.security.KeyFactory"/>
+<fullyQualifiedTypeName name="java.security.spec.RSAPrivateKeySpec"/>
+<fullyQualifiedTypeName name="java.security.PrivateKey"/>
+<fullyQualifiedTypeName name="javax.crypto.Cipher"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.server.interf.SSCCryptoPublic"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.server.shared.SSCCryptoRSA"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.server.shared.SSCFileManager"/>
+<fullyQualifiedTypeName name="com.vestrel00.ssc.client.interf.SSCCryptoPublic"/>
+<fullyQualifiedTypeName name="java.io.ObjectInputStream"/>
+<fullyQualifiedTypeName name="java.security.PublicKey"/>
 </qualifiedTypeNameHistroy>

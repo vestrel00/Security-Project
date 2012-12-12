@@ -1,0 +1,10 @@
+package com.vestrel00.ssc.server.shared;
+
+/**
+ * Simple file saving protocol taken from 
+ * <a href="http://www.javamex.com/tutorials/cryptography/rsa_encryption.shtml">
+ * RSA Encryption tutorial</a>
+ */
+public class SSCFileManager {
+
+}

@@ -1,0 +1,29 @@
+package com.vestrel00.ssc.server.shared;
+
+import java.security.PrivateKey;
+import java.security.PublicKey;
+
+import com.vestrel00.ssc.server.interf.SSCCryptoPublic;
+
+public class SSCCryptoRSA implements SSCCryptoPublic {
+	
+	PrivateKey privKey;
+	PublicKey pubKey;
+
+	public SSCCryptoRSA(PrivateKey privKey, PublicKey pubKey) {
+
+	}
+
+	@Override
+	public byte[] encrypt(byte[] message) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public byte[] decrypt(byte[] message, byte[] iv) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

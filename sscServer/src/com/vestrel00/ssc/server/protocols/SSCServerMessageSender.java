@@ -23,7 +23,7 @@ public class SSCServerMessageSender implements SSCProtocol {
 	private SSCServerService service;
 	private SSCCryptoPrivate crypt;
 	private boolean isWorking;
-	private List<byte[]> pendingEM, pendingHM, pendingIV;
+	private List<byte[]> pendingEM, pendingHEM, pendingIV;
 
 	/**
 	 * Initialize the protocol as well as the crypto.
@@ -39,7 +39,7 @@ public class SSCServerMessageSender implements SSCProtocol {
 		this.crypt = crypt;
 		isWorking = true;
 		pendingEM = new ArrayList<byte[]>();
-		pendingHM = new ArrayList<byte[]>();
+		pendingHEM = new ArrayList<byte[]>();
 		pendingIV = new ArrayList<byte[]>();
 	}
 
@@ -98,14 +98,14 @@ public class SSCServerMessageSender implements SSCProtocol {
 				if (confirmed) {
 					if (debug)
 						System.out.println(service.getClient().getName()
-								+ "Sender: sending H(m)");
-					// send H(m)
+								+ "Sender: sending H(E(m))");
+					// send H(E(m))
 					SSCStreamManager.sendBytes(service.getClient()
-							.getOutputStream(), pendingHM.get(0));
+							.getOutputStream(), pendingHEM.get(0));
 				} else
 					return;// something went wrong - do not send the message
 				pendingEM.remove(0);
-				pendingHM.remove(0);
+				pendingHEM.remove(0);
 				pendingIV.remove(0);
 			}
 		} catch (IOException e) {
@@ -117,8 +117,8 @@ public class SSCServerMessageSender implements SSCProtocol {
 		pendingEM.add(em);
 	}
 
-	public void addToPendingHM(byte[] hm) {
-		pendingHM.add(hm);
+	public void addToPendingHEM(byte[] hm) {
+		pendingHEM.add(hm);
 	}
 
 	public void addToPendingIV(byte[] iv) {

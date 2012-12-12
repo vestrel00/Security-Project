@@ -64,15 +64,15 @@ public class SSCClientMessageReceiver implements SSCProtocol {
 			SSCStreamManager.sendBytes(client.getOutputStream(),
 					crypt.getConfirmCode());
 			// System.out.println(client.getUserName()
-			// + "Receiver: waiting for H(m)");
-			// Wait for H(m)
-			byte[] hm = SSCStreamManager.readBytes(client
+			// + "Receiver: waiting for H(E(m))");
+			// Wait for H(E(m))
+			byte[] hem = SSCStreamManager.readBytes(client
 					.getServerInputStream());
 			// m
 			byte[] m = crypt.decrypt(em, iv);
 			// H(E(m))
-			byte[] hem = MessageDigest.getInstance("SHA-1").digest(m);
-			// authenticate
+			byte[] hm = MessageDigest.getInstance("SHA-1").digest(em);
+			
 			if (hem.length != hm.length)
 				return;
 
