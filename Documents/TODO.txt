@@ -3,4 +3,25 @@ Simple Secure Chat (SSC)
 Fall 2012
 TODO List
 
-See SSCServiceStandard.
+1)	See SSCServiceStandard.
+2)	Add a hash to RSA pre-chat transactions.
+
+4)	IMPORTANT! 
+	Mistake in implementation of login authentication using hashed passwords!
+	Currently: (WRONG!)
+		storing (H(salt + pass), salt) in the DB (Database)
+		sending the salt to user on login
+		user sends H(salt + pass)
+		compare user sent and stored saltedHashedPass in DB
+		This does not prevent an offline dictionary attack if attacker has access to DB
+	Must change to:
+		correct implementation (lol)
+
+5)	Instead of storing the hashedPassword, store the password that is hashed 100,000 times!
+	Make the client do the work! not the server!
+	- So server sends salt stored in DB to client.
+	- client concats the salt with the password from user input. 
+	- client hashes (salt+password) 100,000 times
+ 	- client sends hash to server
+	- server looks up the stored hashed^100,000 times in the DB and authenticates
+	Point is to make the client do the hashing - not the server.
