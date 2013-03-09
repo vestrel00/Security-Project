@@ -1,0 +1,18 @@
+# By extension
+*.class
+*.log
+*.jar
+*.classpath
+*.project
+
+# By specified file
+SSCDictionary.txt
+
+# By folders
+SSCServerDB/
+bin/
+keys/
+Documents/
+.metadata/
+.settings/
+
