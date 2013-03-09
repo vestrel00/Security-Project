@@ -10,7 +10,7 @@ Please check out the [Downloads](https://bitbucket.org/vestrel00/security-projec
 
 **P.S.**  
 1. Note that I coded everything in a rapid-prototyping kind of way.
-Therefore, the code can be optimized and be made more readable in some places.  
+Therefore, the code can be optimized and be made more readable in some places.
 
 2. I've documented everything so you may get away with browsing my source 
 without having to read lines of code. Just read documentation to avoid headache!
