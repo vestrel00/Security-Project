@@ -115,10 +115,10 @@ public class SSCServerDB {
 			ps = conn.prepareStatement("INSERT INTO " + FRIENDS
 					+ " VALUES (?, ?, ?, ?, ?)");
 			ps.setInt(1, id);
-			ps.setAsciiStream(2, friendsClob.getAsciiStream());
-			ps.setAsciiStream(3, enemiesClob.getAsciiStream());
-			ps.setAsciiStream(4, sentClob.getAsciiStream());
-			ps.setAsciiStream(5, receivedClob.getAsciiStream());
+			ps.setClob(2, friendsClob);
+			ps.setClob(3, enemiesClob);
+			ps.setClob(4, sentClob);
+			ps.setClob(5, receivedClob);
 			ps.execute();
 			ps.close();
 			friendsClob.free();
@@ -363,7 +363,7 @@ public class SSCServerDB {
 			listClob.setString(1, list);
 			PreparedStatement ps = conn.prepareStatement("UPDATE " + FRIENDS
 					+ " SET " + listType + " = ? WHERE id = ?");
-			ps.setAsciiStream(1, listClob.getAsciiStream());
+			ps.setClob(1, listClob);
 			ps.setInt(2, id);
 			ps.execute();
 			ps.close();
@@ -394,7 +394,7 @@ public class SSCServerDB {
 			newList.setString(1, list);
 			PreparedStatement ps = conn.prepareStatement("UPDATE " + FRIENDS
 					+ " SET " + listType + " = ? WHERE id = ?");
-			ps.setAsciiStream(1, newList.getAsciiStream());
+			ps.setClob(1, newList);
 			ps.setInt(2, id);
 			ps.execute();
 			ps.close();
